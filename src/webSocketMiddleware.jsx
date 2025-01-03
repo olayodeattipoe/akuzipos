@@ -40,17 +40,20 @@ const webSocketMiddleware = (url) => {
                         const data = JSON.parse(event.data);
                         let returnables = data.message;
                         
+                        console.log('WebSocket message received:', data.type, returnables);
+                        
                         switch (data.type) {
                             case 'Greeting':
                                 console.log('Greeting from server:', returnables);
                                 break;
                             
                             case 'sendCategories':
+                                console.log('Receiving categories:', returnables);
                                 store.dispatch(setNavMenuArray(returnables))
                                 break;
                             
                             case 'sendMenuContents':
-                                console.log('Received menu contents:', returnables);
+                                console.log('Receiving menu contents:', returnables);
                                 if (Array.isArray(returnables) && selectedCategory === state.gl_variables.selectedCategory) {
                                     store.dispatch(setCurrentArray(returnables));
                                     store.dispatch(setSearchQuery(''));
