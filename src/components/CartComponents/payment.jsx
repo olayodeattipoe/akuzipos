@@ -94,6 +94,13 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 amount: parseInt(totalAmount) * 100,
                 callback_url: `${window.location.origin}/payment/success`,
                 metadata: orderData
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                withCredentials: true
             })
             .then(response => {
                 if (response.data.status) {
