@@ -34,6 +34,12 @@ const generatePosUserId = () => {
     return newId;
 };
 
+const generateValidUserId = () => {
+    const timestamp = new Date().getTime();
+    const random = Math.random().toString(36).substring(2, 6);
+    return `pos-${timestamp}-${random}`.replace(/[^a-zA-Z0-9-.]/g, '-');
+};
+
 const initialState = {
     selectedCategory: '',
     currentArray: [],
@@ -419,12 +425,13 @@ const gl_variables = createSlice({
         },
 
         regeneratePosUserId: (state) => {
+            const newUserId = generateValidUserId();
             state.userInfo = {
+                ...state.userInfo,
+                userId: newUserId,
                 name: 'POS User',
-                userId: generatePosUserId(),
-                isLoggedIn: false,
                 email: 'pos@calabash.com',
-                phone: ''
+                isLoggedIn: false
             };
         }
     }
