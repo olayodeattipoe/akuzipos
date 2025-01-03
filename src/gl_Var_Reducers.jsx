@@ -35,7 +35,7 @@ const generatePosUserId = () => {
 };
 
 const generateValidUserId = () => {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const letter = alphabet[Math.floor(Math.random() * alphabet.length)];
     const numbers = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
     return `${letter}${numbers}`;
