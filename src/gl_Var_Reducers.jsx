@@ -71,7 +71,8 @@ const initialState = {
         isLoggedIn: false,
         email: 'pos@calabash.com',
         phone: ''
-    }
+    },
+    orders: []
 };
 
 const HandleContainerEntries = (state, action) => {
@@ -434,6 +435,25 @@ const gl_variables = createSlice({
                 email: 'pos@calabash.com',
                 isLoggedIn: false
             };
+        },
+
+        setOrders: (state, action) => {
+            state.orders = action.payload;
+        },
+
+        addOrder: (state, action) => {
+            if (!state.orders) {
+                state.orders = [];
+            }
+            state.orders.unshift(action.payload);
+        },
+
+        updateOrder: (state, action) => {
+            const { uuid, ...updates } = action.payload;
+            const orderIndex = state.orders?.findIndex(order => order.uuid === uuid);
+            if (orderIndex !== -1 && state.orders) {
+                state.orders[orderIndex] = { ...state.orders[orderIndex], ...updates };
+            }
         }
     }
 })
@@ -460,6 +480,9 @@ export const {
     CLEAN_CARD_STATE,
     setActiveTab,
     clearUserInfo,
-    regeneratePosUserId
+    regeneratePosUserId,
+    setOrders,
+    addOrder,
+    updateOrder
 } = gl_variables.actions;
 export default gl_variables.reducer;
