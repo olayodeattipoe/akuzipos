@@ -1,4 +1,4 @@
-import { setCurrentArray, setNavMenuArray, setCustomOptions, setSearchQuery } from "./gl_Var_Reducers";
+import { setCurrentArray, setNavMenuArray, setCustomOptions, setSearchQuery, setOrders } from "./gl_Var_Reducers";
 
 
 const webSocketMiddleware = (url) => {
@@ -70,7 +70,7 @@ const webSocketMiddleware = (url) => {
                             case 'sendOrdersMadeToday':
                                 console.log('Received orders made today:', returnables);
                                 if (Array.isArray(returnables)) {
-                                    store.dispatch(setOrder(returnables));
+                                    store.dispatch(setOrders(returnables));
                                 }
                                 break;
                         }
