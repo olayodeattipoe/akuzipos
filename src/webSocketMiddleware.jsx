@@ -1,4 +1,4 @@
-import { setCurrentArray, setNavMenuArray, setCustomOptions, setSearchQuery, setOrders } from "./gl_Var_Reducers";
+import { setCurrentArray, setNavMenuArray, setCustomOptions, setSearchQuery, setOrders, addOrder } from "./gl_Var_Reducers";
 
 
 const webSocketMiddleware = (url) => {

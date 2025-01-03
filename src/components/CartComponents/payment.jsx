@@ -84,7 +84,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
 
         if (paymentMethod === "momo") {
             // Store order data in Redux before payment
-            dispatch(addOrder(orderData));
+            //dispatch(addOrder(orderData));
 
             // Store current URL parameters in localStorage
             localStorage.setItem('userParams', window.location.search);
