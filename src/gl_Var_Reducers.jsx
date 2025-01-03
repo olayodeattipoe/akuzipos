@@ -35,9 +35,10 @@ const generatePosUserId = () => {
 };
 
 const generateValidUserId = () => {
-    const timestamp = new Date().getTime();
-    const random = Math.random().toString(36).substring(2, 6);
-    return `pos-${timestamp}-${random}`.replace(/[^a-zA-Z0-9-.]/g, '-');
+    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letter = alphabet[Math.floor(Math.random() * alphabet.length)];
+    const numbers = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+    return `${letter}${numbers}`;
 };
 
 const initialState = {
