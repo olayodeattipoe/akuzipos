@@ -311,14 +311,14 @@ const gl_variables = createSlice({
                     } else {
                         currentMainDish.main_dish_price += 1;
                     }
-                } else if (quantityAction === 'decrease' && currentMainDish.main_dish_price > mainDish.base_price) {
+                } else if (quantityAction === 'decrease' && currentMainDish.main_dish_price > 0) {
                     currentMainDish.main_dish_price -= 1;
                 }
                 currentMainDish.quantity = 1;
             } else {
                 if (quantityAction === 'increase') {
-                    currentMainDish.quantity += 1;
-                } else if (quantityAction === 'decrease' && currentMainDish.quantity > 1) {
+                    currentMainDish.quantity = (currentMainDish.quantity || 0) + 1;
+                } else if (quantityAction === 'decrease' && currentMainDish.quantity > 0) {
                     currentMainDish.quantity -= 1;
                 }
                 currentMainDish.main_dish_price = mainDish.base_price * currentMainDish.quantity;
