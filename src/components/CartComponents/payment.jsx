@@ -102,7 +102,10 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             // Store order data before payment
             const orderData = {
                 container,
-                userInfo,
+                userInfo: {
+                    ...userInfo,
+                    name: guestName || userInfo.name
+                },
                 order: {
                     order_type: orderType,
                     location: deliveryLocation,

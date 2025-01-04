@@ -10,10 +10,13 @@ function App() {
   const dispatch = useDispatch();
   
   useEffect(() => {
-    // Initialize POS user info
-    dispatch({
-      type: 'gl_variables/regeneratePosUserId'
-    });
+    // Only regenerate POS user if no existing user info
+    const existingUserInfo = localStorage.getItem('userInfo');
+    if (!existingUserInfo) {
+      dispatch({
+        type: 'gl_variables/regeneratePosUserId'
+      });
+    }
     dispatch({type: 'websocket/connect'});
   }, []);
 

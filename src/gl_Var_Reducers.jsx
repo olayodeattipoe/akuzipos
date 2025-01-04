@@ -3,37 +3,6 @@ import {createSlice} from "@reduxjs/toolkit";
 // Keep track of used UUIDs to prevent duplicates
 const usedUUIDs = new Set();
 
-const generatePosUserId = () => {
-    const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    const symbols = '!@#$%^&*-_+=';
-    const alphanumeric = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let newId;
-    
-    do {
-        // First character is always a letter
-        const firstChar = letters[Math.floor(Math.random() * letters.length)];
-        
-        // Second character is always a symbol
-        const symbolChar = symbols[Math.floor(Math.random() * symbols.length)];
-        
-        // Last two characters can be any alphanumeric
-        const lastChars = Array(2).fill(0)
-            .map(() => alphanumeric[Math.floor(Math.random() * alphanumeric.length)])
-            .join('');
-        
-        newId = `${firstChar}${symbolChar}${lastChars}`;
-    } while (usedUUIDs.has(newId));
-    
-    usedUUIDs.add(newId);
-    
-    if (usedUUIDs.size > 1000) {
-        usedUUIDs.clear();
-        usedUUIDs.add(newId);
-    }
-    
-    return newId;
-};
-
 const generateValidUserId = () => {
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
     const letter = alphabet[Math.floor(Math.random() * alphabet.length)];
@@ -66,7 +35,7 @@ const initialState = {
     },
     userInfo: {
         name: 'POS User',
-        userId: generatePosUserId(),
+        userId: generateValidUserId(),
         isLoggedIn: false,
         email: 'pos@calabash.com',
         phone: ''
@@ -380,8 +349,7 @@ const gl_variables = createSlice({
         clearCart: (state) => {
             state.container = {};
             state.selectedContainer = 1;
-            // Generate new POS user ID after cart is cleared
-            state.userInfo.userId = generatePosUserId();
+            state.userInfo.userId = generateValidUserId();
         },
 
         UPDATE_MAIN_DISH: (state, action) => {
@@ -430,7 +398,6 @@ const gl_variables = createSlice({
             state.userInfo = {
                 ...state.userInfo,
                 userId: newUserId,
-                name: 'POS User',
                 email: 'pos@calabash.com',
                 isLoggedIn: false
             };
