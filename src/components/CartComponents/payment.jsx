@@ -111,44 +111,53 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         };
 
         if (paymentMethod === "momo") {
-            // Store order data in Redux before payment
-            //dispatch(addOrder(orderData));
-
             // Store current URL parameters in localStorage
             localStorage.setItem('userParams', window.location.search);
 
-            console.log('Payment Payload:', {
+            // Create payment payload
+            const paymentPayload = {
                 email: orderData.email,
-                amount: Math.round(parseFloat(totalAmount) * 100),
+                amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
                 metadata: orderData
+            };
+
+            // Debug logging
+            console.log('Sending payment request with:', {
+                email: paymentPayload.email,
+                amount: paymentPayload.amount,
+                metadata: JSON.stringify(paymentPayload.metadata, null, 2)
             });
 
-            axios.post("https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/", {
-                email: orderData.email,
-                amount: Math.round(parseFloat(totalAmount) * 100),
-                callback_url: `${window.location.origin}/payment/success`,
-                metadata: orderData
-            }, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                withCredentials: true
-            })
+            axios.post(
+                "https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/",
+                paymentPayload,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    withCredentials: true
+                }
+            )
             .then(response => {
+                console.log('Payment response:', response.data);
                 if (response.data.status) {
-                    localStorage.setItem('userParams', window.location.search);
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
             })
             .catch(error => {
-                console.error("Payment error:", error);
+                console.error("Payment error details:", {
+                    message: error.message,
+                    response: error.response?.data,
+                    status: error.response?.status
+                });
+                
                 toast({
                     title: "Payment Error",
-                    description: error.message || "Failed to initialize payment",
+                    description: error.response?.data?.message || "Failed to initialize payment",
                     variant: "destructive",
                 });
             });
