@@ -12,9 +12,10 @@ export default function PaymentSuccess() {
 
     useEffect(() => {
         const reference = searchParams.get('reference');
+        let retryCount = 0;
+        const maxRetries = 3;
         
         if (reference) {
-            // Verify payment status with backend
             const verifyPayment = async () => {
                 try {
                     const response = await fetch(
@@ -28,6 +29,12 @@ export default function PaymentSuccess() {
                     );
 
                     if (!response.ok) {
+                        if (retryCount < maxRetries) {
+                            // Wait 2 seconds before retrying
+                            retryCount++;
+                            setTimeout(verifyPayment, 2000);
+                            return;
+                        }
                         throw new Error('Payment verification failed');
                     }
 
@@ -40,13 +47,19 @@ export default function PaymentSuccess() {
                         });
 
                         // Clear cart
-                        dispatch({ type: 'gl_variables/CLEAR_CART' });
+                        dispatch(clearCart());
                         
                         // Navigate to home after 3 seconds
                         setTimeout(() => {
                             navigate('/');
                         }, 3000);
                     } else {
+                        if (retryCount < maxRetries) {
+                            // Wait 2 seconds before retrying
+                            retryCount++;
+                            setTimeout(verifyPayment, 2000);
+                            return;
+                        }
                         throw new Error('Payment not found or expired');
                     }
                 } catch (error) {
@@ -55,7 +68,10 @@ export default function PaymentSuccess() {
                         description: error.message,
                         variant: "destructive",
                     });
-                    navigate('/');
+                    // Only navigate away if we've exhausted all retries
+                    if (retryCount >= maxRetries) {
+                        navigate('/');
+                    }
                 }
             };
 
