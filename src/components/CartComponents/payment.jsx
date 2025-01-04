@@ -112,12 +112,10 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
 
         if (paymentMethod === "momo") {
             const paymentPayload = {
-                email: cleanMetadata.email,
+                email: order.email,
                 amount: Math.round(Number(totalAmount) * 100),
-                metadata: cleanMetadata
+                metadata: order
             };
-
-            console.log('Payment Payload:', JSON.stringify(paymentPayload, null, 2));
 
             try {
                 const response = await axios({
@@ -132,21 +130,13 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     withCredentials: true
                 });
 
-                console.log('Payment Response:', response.data);
-
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
             } catch (error) {
-                console.error("Payment error details:", {
-                    message: error.message,
-                    response: error.response?.data,
-                    status: error.response?.status,
-                    payload: paymentPayload
-                });
-                
+                console.error("Payment error:", error);
                 toast({
                     title: "Payment Error",
                     description: error.response?.data?.message || "Failed to initialize payment",
