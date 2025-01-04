@@ -179,17 +179,23 @@ export default function Cart({ buttonClassName }) {
         
         const calculateBasketTotal = () => {
             const itemsTotal = items.reduce((total, item) => {
+                // Skip if the item itself is unavailable
+                if (!item.is_available) return total;
+                
                 let customizationTotal = 0;
 
                 // Calculate customizations total
                 if (item.customizations) {
                     Object.entries(item.customizations).forEach(([optionId, optionChoices]) => {
                         Object.entries(optionChoices).forEach(([choiceName, choice]) => {
-                            if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
-                                customizationTotal += choice.price;
-                            } else {
-                                if (choice.quantity > 0) {
+                            // Only include if the choice is available
+                            if (choice.is_available) {
+                                if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
                                     customizationTotal += choice.price;
+                                } else {
+                                    if (choice.quantity > 0) {
+                                        customizationTotal += choice.price;
+                                    }
                                 }
                             }
                         });
