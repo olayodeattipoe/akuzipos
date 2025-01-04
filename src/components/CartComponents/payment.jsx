@@ -107,7 +107,6 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             payment_method: paymentMethod,
             amount: Number(totalAmount),
             location: orderType === "delivery" ? deliveryLocation : "",
-            orderMessage: order.orderMessage
         };
 
         if (paymentMethod === "momo") {

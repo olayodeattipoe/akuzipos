@@ -31,7 +31,6 @@ export default function Cart({ buttonClassName }) {
     const userInfo = useSelector((state) => state.gl_variables.userInfo);
     const navigate = useNavigate();
     const [showPayment, setShowPayment] = useState(false);
-    const [orderMessage, setOrderMessage] = useState('');
     const [guestName, setGuestName] = useState('');
 
     useEffect(()=>{
@@ -300,7 +299,6 @@ export default function Cart({ buttonClassName }) {
         
         const orderData = {
             name: formattedName,
-            orderMessage: orderMessage.trim(),
             containers: container
         };
         
@@ -360,21 +358,6 @@ export default function Cart({ buttonClassName }) {
                                     </div>
                                 )}
 
-                                {/* Order Message Textarea */}
-                                <div className="mb-2">
-                                    <textarea
-                                        id="orderMessage"
-                                        rows={2}
-                                        placeholder="Add a note to your order (optional)"
-                                        className="w-full px-3 py-1.5 text-sm bg-gray-800/50 border border-gray-700/50 
-                                                 rounded-lg text-gray-300 placeholder-gray-500
-                                                 focus:outline-none focus:ring-2 focus:ring-yellow-500/20 
-                                                 focus:border-yellow-500/30 transition-all duration-200"
-                                        value={orderMessage}
-                                        onChange={(e) => setOrderMessage(e.target.value)}
-                                    />
-                                </div>
-
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-base font-medium text-gray-300">Grand Total</span>
                                     <span className="text-xl font-semibold text-yellow-400">
@@ -402,7 +385,6 @@ export default function Cart({ buttonClassName }) {
                     onClose={() => setShowPayment(false)}
                     totalAmount={calculateGrandTotal()}
                     guestName={guestName ? guestName.trim() : `Guest #${userInfo.userId}`}
-                    orderMessage={orderMessage}
                 />
             </SheetContent>
         </Sheet>

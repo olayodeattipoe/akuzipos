@@ -63,7 +63,6 @@ const initialState = {
         containers: {},
         Payment: "",
         isLoggedIn: false,
-        orderMessage: ""
     },
     userInfo: {
         name: 'POS User',
