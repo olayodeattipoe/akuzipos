@@ -9,15 +9,13 @@ export default function PaymentSuccess() {
     const dispatch = useDispatch();
     const { toast } = useToast();
     const [searchParams] = useSearchParams();
-    const order = useSelector((state) => state.gl_variables.order);
-    const container = useSelector((state) => state.gl_variables.container);
-    const userInfo = useSelector((state) => state.gl_variables.userInfo);
 
     useEffect(() => {
         const reference = searchParams.get('reference');
         const userParams = localStorage.getItem('userParams') || '';
+        const storedOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
 
-        if (reference) {
+        if (reference && storedOrder.container) {
             const checkPayment = async () => {
                 try {
                     const response = await fetch(
@@ -27,20 +25,19 @@ export default function PaymentSuccess() {
                     if (response.ok) {
                         const data = await response.json();
                         if (data.success) {
-                            // Prepare complete order data
+                            // Use stored order data
                             const completeOrder = {
-                                user_id: userInfo.userId,
-                                name: userInfo.name,
-                                email: userInfo.email,
-                                containers: container,
+                                user_id: storedOrder.userInfo.userId,
+                                name: storedOrder.userInfo.name,
+                                email: storedOrder.userInfo.email,
+                                containers: storedOrder.container,
                                 payment_reference: reference,
                                 payment_method: 'momo',
-                                order_type: order.order_type || 'onsite',
-                                location: order.location || '',
-                                phone: order.phone || userInfo.phone || ''
+                                order_type: storedOrder.order.order_type || 'onsite',
+                                location: storedOrder.order.location || '',
+                                phone: storedOrder.order.phone || ''
                             };
 
-                            // Send order to order manager
                             await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
                                 method: 'POST',
                                 headers: {
@@ -55,8 +52,10 @@ export default function PaymentSuccess() {
                                 description: "Your order has been confirmed",
                             });
 
+                            // Clear everything
                             dispatch({ type: 'gl_variables/clearCart' });
                             localStorage.removeItem('userParams');
+                            localStorage.removeItem('pendingOrder');
 
                             setTimeout(() => {
                                 window.location.href = `https://pasara.netlify.app?returnUrl=${encodeURIComponent(window.location.origin)}`;

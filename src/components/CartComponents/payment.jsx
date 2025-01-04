@@ -99,20 +99,23 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
    
 
         if (paymentMethod === "momo") {
-            // Log the values before creating payload
-            console.log("Debug values:", {
-                email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
-                totalAmount,
-                calculatedAmount: Math.round(Number(totalAmount) * 100)
-            });
+            // Store order data before payment
+            const orderData = {
+                container,
+                userInfo,
+                order: {
+                    order_type: orderType,
+                    location: deliveryLocation,
+                    phone: userInfo.phone
+                }
+            };
+            
+            localStorage.setItem('pendingOrder', JSON.stringify(orderData));
 
             const paymentPayload = {
                 email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
                 amount: Math.round(Number(totalAmount) * 100)
             };
-
-            // Log the final payload
-            console.log("Payment Payload:", paymentPayload);
 
             try {
                 const response = await axios({
@@ -126,8 +129,6 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     },
                     withCredentials: true
                 });
-
-                console.log("Server Response:", response.data);
 
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
