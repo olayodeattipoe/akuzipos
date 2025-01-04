@@ -37,7 +37,7 @@ const initialState = {
         name: 'POS User',
         userId: generateValidUserId(),
         isLoggedIn: false,
-        email: 'pos@calabash.com',
+        email: 'Guest@gmail.com',
         phone: ''
     },
     orders: []
