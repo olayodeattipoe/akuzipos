@@ -93,10 +93,42 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         return true;
     };
 
+    const initializePaystackPayment = async (orderData) => {
+        try {
+            // Initialize payment with Paystack
+            const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/payment/initialize/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: orderData.email,
+                    amount: orderData.amount * 100, // Convert to pesewas
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Payment initialization failed');
+            }
+
+            const data = await response.json();
+            
+            // Redirect to Paystack payment page
+            window.location.href = data.data.authorization_url;
+            
+        } catch (error) {
+            console.error('Payment initialization error:', error);
+            toast({
+                title: "Payment Failed",
+                description: "Could not initialize payment",
+                variant: "destructive",
+            });
+        }
+    };
+
     const handleSubmit = async () => {
         if (!validateDeliveryLocation()) return;
 
-        // Sanitize the container data
         const sanitizedContainer = sanitizeCartItems(container);
         
         const orderData = {
@@ -106,7 +138,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 : (guestName?.trim() || `Guest #${userInfo.userId}`),
             email: userInfo.isLoggedIn 
                 ? userInfo.email 
-                : `pos@calabash.com`,  // Default email for POS users
+                : `pos@calabash.com`,
             containers: sanitizedContainer,
             order_type: orderType,
             payment_method: paymentMethod,
@@ -114,24 +146,21 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             location: orderType === "delivery" ? deliveryLocation : "",
         };
 
-        console.log('Sending order data:', orderData); // Debug log
-
-        if (paymentMethod === "cash") {
-            // Send directly to order manager
+        if (paymentMethod === "momo") {
+            // Handle MoMo payment through Paystack
+            await initializePaystackPayment(orderData);
+        } else if (paymentMethod === "cash") {
+            // Existing cash payment logic
             try {
                 const response = await sendOrderToManager(orderData);
-                console.log('Order manager response:', response); // Debug log
-                
                 dispatch(clearCart());
                 toast({
                     title: "Quick Tip",
                     description: "For active orders, please don't close the browser app completely.",
                     duration: 7000,
-                    variant: "default",
                 });
                 onClose();
             } catch (error) {
-                console.error('Error details:', error); // Debug log
                 toast({
                     title: "Order Failed",
                     description: error.message || "Failed to place order",
@@ -139,7 +168,6 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 });
             }
         }
-        // ... rest of the code
     };
 
     return (
