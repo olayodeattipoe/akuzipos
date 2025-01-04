@@ -58,6 +58,8 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     };
 
     const sendOrderToManager = async (orderData) => {
+        console.log('sendOrderToManager received:', orderData); // Debug log
+        
         try {
             const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
                 method: 'POST',
@@ -74,7 +76,9 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            return await response.json();
+            const data = await response.json();
+            console.log('Order manager response data:', data); // Debug log
+            return data;
         } catch (error) {
             console.error('Error sending order:', error);
             throw error;
@@ -110,78 +114,32 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             location: orderType === "delivery" ? deliveryLocation : "",
         };
 
-        if (paymentMethod === "momo") {
-            // Store current URL parameters in localStorage
-            localStorage.setItem('userParams', window.location.search);
+        console.log('Sending order data:', orderData); // Debug log
 
-            // Create payment payload
-            const paymentPayload = {
-                email: orderData.email,
-                amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
-                metadata: orderData
-            };
-
-            // Debug logging
-            console.log('Sending payment request with:', {
-                email: paymentPayload.email,
-                amount: paymentPayload.amount,
-                metadata: JSON.stringify(paymentPayload.metadata, null, 2)
-            });
-
-            axios.post(
-                "https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/",
-                paymentPayload,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    withCredentials: true
-                }
-            )
-            .then(response => {
-                console.log('Payment response:', response.data);
-                if (response.data.status) {
-                    window.location.href = response.data.data.authorization_url;
-                } else {
-                    throw new Error(response.data.message || 'Payment initialization failed');
-                }
-            })
-            .catch(error => {
-                console.error("Payment error details:", {
-                    message: error.message,
-                    response: error.response?.data,
-                    status: error.response?.status
-                });
+        if (paymentMethod === "cash") {
+            // Send directly to order manager
+            try {
+                const response = await sendOrderToManager(orderData);
+                console.log('Order manager response:', response); // Debug log
                 
+                dispatch(clearCart());
                 toast({
-                    title: "Payment Error",
-                    description: error.response?.data?.message || "Failed to initialize payment",
+                    title: "Quick Tip",
+                    description: "For active orders, please don't close the browser app completely.",
+                    duration: 7000,
+                    variant: "default",
+                });
+                onClose();
+            } catch (error) {
+                console.error('Error details:', error); // Debug log
+                toast({
+                    title: "Order Failed",
+                    description: error.message || "Failed to place order",
                     variant: "destructive",
                 });
-            });
-        } else if (paymentMethod === "cash") {
-            // Handle cash payment
-            sendOrderToManager(orderData)
-                .then(response => {
-                    dispatch(clearCart());
-                    toast({
-                        title: "Quick Tip",
-                        description: "For active orders, please don't close the browser app completely. You can use other apps, just avoid swiping the browser away from recent apps.",
-                        duration: 7000,
-                        variant: "default",
-                    });
-                    onClose();
-                })
-                .catch(error => {
-                    toast({
-                        title: "Order Failed",
-                        description: error.message || "Failed to place order",
-                        variant: "destructive",
-                    });
-                });
+            }
         }
+        // ... rest of the code
     };
 
     return (
