@@ -1,135 +1,60 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, XCircle } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { CheckCircle } from 'lucide-react';
 
 export default function PaymentSuccess() {
-    const dispatch = useDispatch();
     const navigate = useNavigate();
-    const [status, setStatus] = useState('processing');
-    const searchParams = useSearchParams()[0];
+    const dispatch = useDispatch();
     const { toast } = useToast();
+    const [searchParams] = useSearchParams();
 
     useEffect(() => {
         const reference = searchParams.get('reference');
-        const storedOrder = JSON.parse(localStorage.getItem('pendingOrder') || '{}');
-        console.log("Stored Order:", storedOrder); // Debug log
+        const trxref = searchParams.get('trxref');
+        const userParams = localStorage.getItem('userParams') || '';
 
-        if (reference && storedOrder.container) {
-            const checkPayment = async () => {
-                try {
-                    // Prepare the complete order with stored guest name
-                    const completeOrder = {
-                        user_id: storedOrder.userInfo.userId,
-                        name: storedOrder.userInfo.name || `Guest #${storedOrder.userInfo.userId}`,
-                        email: storedOrder.userInfo.email,
-                        containers: storedOrder.container,
-                        payment_reference: reference,
-                        payment_method: 'momo',
-                        order_type: storedOrder.order.order_type || 'onsite',
-                        location: storedOrder.order.location || '',
-                        phone: storedOrder.order.phone || ''
-                    };
-
-                    console.log("Sending order:", completeOrder); // Debug log
-
-                    const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
-                        },
-                        mode: 'cors',
-                        credentials: 'include',
-                        body: JSON.stringify(completeOrder)
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    console.log("Order response:", data); // Debug log
-
-                    if (data.success) {
-                        setStatus('success');
-                        // Clear the cart and stored order after successful processing
-                        dispatch(clearCart());
-                        localStorage.removeItem('pendingOrder');
-                        
-                        toast({
-                            title: "Order Placed Successfully",
-                            description: "Your order has been received and is being processed.",
-                        });
-                    } else {
-                        setStatus('error');
-                        throw new Error(data.message || 'Failed to process order');
-                    }
-                } catch (error) {
-                    console.error('Error processing order:', error);
-                    setStatus('error');
-                    toast({
-                        title: "Error Processing Order",
-                        description: error.message,
-                        variant: "destructive",
-                    });
-                }
-            };
-
-            checkPayment();
-        } else {
-            setStatus('error');
+        if (reference) {
             toast({
-                title: "Invalid Order",
-                description: "No order details found.",
+                title: "Payment Successful",
+                description: "Your order has been confirmed",
+            });
+
+            // Clear cart
+            dispatch({ type: 'gl_variables/CLEAR_CART' });
+            
+            // Clear stored parameters
+            localStorage.removeItem('userParams');
+            
+            // Clear user info from localStorage and Redux
+            localStorage.removeItem('userInfo');
+            sessionStorage.removeItem('hasAttemptedRedirect');
+            dispatch({ type: 'gl_variables/CLEAR_USER_INFO' });
+
+            // Redirect to authentication after 3 seconds
+            const timer = setTimeout(() => {
+                window.location.href = `https://pasara.netlify.app?returnUrl=${encodeURIComponent(window.location.origin)}`;
+            }, 3000);
+
+            return () => clearTimeout(timer);
+        } else {
+            toast({
+                title: "Payment Failed",
+                description: "Your payment was not successful",
                 variant: "destructive",
             });
+            navigate(`/${userParams}`);
         }
-    }, [dispatch, searchParams, toast]);
+    }, []);
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-900 p-4">
-            <Card className="w-full max-w-md">
-                <CardHeader>
-                    <CardTitle>Order Status</CardTitle>
-                    <CardDescription>
-                        {status === 'processing' && 'Processing your order...'}
-                        {status === 'success' && 'Order placed successfully!'}
-                        {status === 'error' && 'Error processing order'}
-                    </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    {status === 'processing' && (
-                        <div className="flex justify-center">
-                            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-yellow-400" />
-                        </div>
-                    )}
-                    {status === 'success' && (
-                        <div className="text-center space-y-4">
-                            <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
-                            <p className="text-gray-300">Thank you for your order!</p>
-                        </div>
-                    )}
-                    {status === 'error' && (
-                        <div className="text-center space-y-4">
-                            <XCircle className="mx-auto h-12 w-12 text-red-500" />
-                            <p className="text-gray-300">Something went wrong processing your order.</p>
-                        </div>
-                    )}
-                </CardContent>
-                <CardFooter className="flex justify-center">
-                    <Button 
-                        onClick={() => navigate('/')}
-                        variant="outline"
-                    >
-                        Return to Menu
-                    </Button>
-                </CardFooter>
-            </Card>
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900">
+            <div className="text-center">
+                <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
+                <h2 className="text-2xl font-semibold text-white mb-2">Payment Successful!</h2>
+                <p className="text-gray-400">Redirecting you shortly...</p>
+            </div>
         </div>
     );
 } 

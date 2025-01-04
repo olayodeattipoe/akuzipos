@@ -96,67 +96,78 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         // Sanitize the container data
         const sanitizedContainer = sanitizeCartItems(container);
         
-        // Create order data for both payment methods
         const orderData = {
-            container,
-            userInfo: {
-                ...userInfo,
-                name: guestName || userInfo.name
-            },
-            order: {
-                order_type: orderType,
-                location: deliveryLocation,
-                phone: userInfo.phone
-            }
+            user_id: userInfo.userId,
+            name: userInfo.isLoggedIn 
+                ? userInfo.name 
+                : (guestName?.trim() || `Guest #${userInfo.userId}`),
+            email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
+            containers: sanitizedContainer,
+            order_type: orderType,
+            payment_method: paymentMethod,
+            amount: Number(totalAmount),
+            location: orderType === "delivery" ? deliveryLocation : "",
         };
-        
+
         if (paymentMethod === "momo") {
-            // Store order data before payment
-            localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-            
+            // Store current URL parameters in localStorage
+            localStorage.setItem('userParams', window.location.search);
+
+            // Create payment payload
             const paymentPayload = {
-                email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
-                amount: Math.round(Number(totalAmount) * 100)
+                email: orderData.email,
+                amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
+                metadata: orderData
             };
 
-            try {
-                const response = await axios({
-                    method: 'post',
-                    url: 'https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/',
-                    data: paymentPayload,
+            // Debug logging
+            console.log('Sending payment request with:', {
+                email: paymentPayload.email,
+                amount: paymentPayload.amount,
+                metadata: JSON.stringify(paymentPayload.metadata, null, 2)
+            });
+
+            axios.post(
+                "https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/",
+                paymentPayload,
+                {
                     headers: {
                         'Content-Type': 'application/json',
                         'Accept': 'application/json',
                         'X-Requested-With': 'XMLHttpRequest'
                     },
                     withCredentials: true
-                });
-
+                }
+            )
+            .then(response => {
+                console.log('Payment response:', response.data);
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
-            } catch (error) {
-                // More detailed error logging
-                console.error("Full error object:", error);
-                console.error("Response data:", error.response?.data);
-                console.error("Request payload:", paymentPayload);
+            })
+            .catch(error => {
+                console.error("Payment error details:", {
+                    message: error.message,
+                    response: error.response?.data,
+                    status: error.response?.status
+                });
                 
                 toast({
                     title: "Payment Error",
-                    description: error.response?.data?.message || "Failed to initialize payment. Please try again.",
+                    description: error.response?.data?.message || "Failed to initialize payment",
                     variant: "destructive",
                 });
-            }
+            });
         } else if (paymentMethod === "cash") {
-            // Now orderData is available here
+            // Handle cash payment
             sendOrderToManager(orderData)
                 .then(response => {
                     dispatch(clearCart());
                     toast({
                         title: "Quick Tip",
-                        description: "For active orders, please don't close the browser app completely.",
+                        description: "For active orders, please don't close the browser app completely. You can use other apps, just avoid swiping the browser away from recent apps.",
                         duration: 7000,
                         variant: "default",
                     });
