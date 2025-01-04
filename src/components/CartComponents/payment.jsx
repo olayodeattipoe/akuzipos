@@ -97,18 +97,6 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         const sanitizedContainer = sanitizeCartItems(container);
         
         // Create a clean metadata object
-        const cleanMetadata = {
-            user_id: userInfo.userId,
-            name: userInfo.isLoggedIn 
-                ? userInfo.name 
-                : (guestName?.trim() || `Guest #${userInfo.userId}`),
-            email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
-            containers: sanitizedContainer,
-            order_type: orderType,
-            payment_method: paymentMethod,
-            amount: Number(totalAmount),
-            location: orderType === "delivery" ? deliveryLocation : ""
-        };
 
         if (paymentMethod === "momo") {
             const paymentPayload = {
