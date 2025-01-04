@@ -110,11 +110,11 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         };
 
         if (paymentMethod === "momo") {
-            // Create payment payload with stringified metadata
+            // Create payment payload without stringifying metadata
             const paymentPayload = {
                 email: orderData.email,
                 amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
-                metadata: JSON.stringify(orderData) // Stringify here explicitly
+                metadata: orderData // Send as object, not stringified
             };
 
             try {
@@ -127,8 +127,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        withCredentials: true,
-                        transformRequest: [(data) => JSON.stringify(data)]
+                        withCredentials: true
                     }
                 );
 
