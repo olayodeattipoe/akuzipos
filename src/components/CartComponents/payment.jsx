@@ -93,14 +93,16 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     const handleSubmit = async () => {
         if (!validateDeliveryLocation()) return;
 
-        // Create base order data without stringification
+        // Sanitize the container data
+        const sanitizedContainer = sanitizeCartItems(container);
+        
         const orderData = {
             user_id: userInfo.userId,
             name: userInfo.isLoggedIn 
                 ? userInfo.name 
                 : (guestName?.trim() || `Guest #${userInfo.userId}`),
             email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
-            containers: container, // Use the container directly without sanitization
+            containers: sanitizedContainer,
             order_type: orderType,
             payment_method: paymentMethod,
             amount: Number(totalAmount),
@@ -108,11 +110,11 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         };
 
         if (paymentMethod === "momo") {
-            // Create payment payload without stringifying metadata
+            // Create payment payload with stringified metadata
             const paymentPayload = {
                 email: orderData.email,
                 amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
-                metadata: orderData // Send as is, without stringification
+                metadata: JSON.stringify(orderData) // Stringify here explicitly
             };
 
             try {
@@ -125,7 +127,8 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                             'Accept': 'application/json',
                             'X-Requested-With': 'XMLHttpRequest'
                         },
-                        withCredentials: true
+                        withCredentials: true,
+                        transformRequest: [(data) => JSON.stringify(data)]
                     }
                 );
 
@@ -135,7 +138,12 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
             } catch (error) {
-                console.error("Payment error:", error);
+                console.error("Payment error details:", {
+                    message: error.message,
+                    response: error.response?.data,
+                    status: error.response?.status
+                });
+                
                 toast({
                     title: "Payment Error",
                     description: error.response?.data?.message || "Failed to initialize payment",
@@ -143,13 +151,13 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 });
             }
         } else if (paymentMethod === "cash") {
-            // Handle cash payment
+            // Keep existing cash payment logic
             sendOrderToManager(orderData)
                 .then(response => {
                     dispatch(clearCart());
                     toast({
                         title: "Quick Tip",
-                        description: "For active orders, please don't close the browser app completely. You can use other apps, just avoid swiping the browser away from recent apps.",
+                        description: "For active orders, please don't close the browser app completely.",
                         duration: 7000,
                         variant: "default",
                     });
