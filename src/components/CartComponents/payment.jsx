@@ -96,7 +96,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         // Sanitize the container data
         const sanitizedContainer = sanitizeCartItems(container);
         
-        // Create a clean metadata object
+   
 
         if (paymentMethod === "momo") {
             const paymentPayload = {
