@@ -89,9 +89,15 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             // Store current URL parameters in localStorage
             localStorage.setItem('userParams', window.location.search);
 
+            console.log('Payment Payload:', {
+                email: orderData.email,
+                amount: Math.round(parseFloat(totalAmount) * 100),
+                metadata: orderData
+            });
+
             axios.post("https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/", {
                 email: orderData.email,
-                amount: parseInt(totalAmount) * 100,
+                amount: Math.round(parseFloat(totalAmount) * 100),
                 callback_url: `${window.location.origin}/payment/success`,
                 metadata: orderData
             }, {
