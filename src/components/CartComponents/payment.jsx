@@ -99,11 +99,20 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
    
 
         if (paymentMethod === "momo") {
+            // Log the values before creating payload
+            console.log("Debug values:", {
+                email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
+                totalAmount,
+                calculatedAmount: Math.round(Number(totalAmount) * 100)
+            });
+
             const paymentPayload = {
-                email: order.email,
-                amount: Math.round(Number(totalAmount) * 100),
-                metadata: order
+                email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
+                amount: Math.round(Number(totalAmount) * 100)
             };
+
+            // Log the final payload
+            console.log("Payment Payload:", paymentPayload);
 
             try {
                 const response = await axios({
@@ -118,16 +127,22 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     withCredentials: true
                 });
 
+                console.log("Server Response:", response.data);
+
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
             } catch (error) {
-                console.error("Payment error:", error);
+                // More detailed error logging
+                console.error("Full error object:", error);
+                console.error("Response data:", error.response?.data);
+                console.error("Request payload:", paymentPayload);
+                
                 toast({
                     title: "Payment Error",
-                    description: error.response?.data?.message || "Failed to initialize payment",
+                    description: error.response?.data?.message || "Failed to initialize payment. Please try again.",
                     variant: "destructive",
                 });
             }
