@@ -96,7 +96,8 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         // Sanitize the container data
         const sanitizedContainer = sanitizeCartItems(container);
         
-        const orderData = {
+        // Create a clean metadata object
+        const cleanMetadata = {
             user_id: userInfo.userId,
             name: userInfo.isLoggedIn 
                 ? userInfo.name 
@@ -106,28 +107,19 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             order_type: orderType,
             payment_method: paymentMethod,
             amount: Number(totalAmount),
-            location: orderType === "delivery" ? deliveryLocation : "",
+            location: orderType === "delivery" ? deliveryLocation : ""
         };
 
         if (paymentMethod === "momo") {
-            // Create payment payload as a plain object
             const paymentPayload = {
-                email: orderData.email,
-                amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
-                metadata: {
-                    user_id: userInfo.userId,
-                    name: orderData.name,
-                    email: orderData.email,
-                    containers: sanitizedContainer,
-                    order_type: orderType,
-                    payment_method: paymentMethod,
-                    amount: Number(totalAmount),
-                    location: orderType === "delivery" ? deliveryLocation : ""
-                }
+                email: cleanMetadata.email,
+                amount: Math.round(Number(totalAmount) * 100),
+                metadata: cleanMetadata
             };
 
+            console.log('Payment Payload:', JSON.stringify(paymentPayload, null, 2));
+
             try {
-                // Let axios handle the JSON stringification
                 const response = await axios({
                     method: 'post',
                     url: 'https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/',
@@ -140,17 +132,19 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     withCredentials: true
                 });
 
+                console.log('Payment Response:', response.data);
+
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
             } catch (error) {
-                console.error("Payment error:", {
+                console.error("Payment error details:", {
                     message: error.message,
-                    data: error.response?.data,
+                    response: error.response?.data,
                     status: error.response?.status,
-                    sentData: paymentPayload
+                    payload: paymentPayload
                 });
                 
                 toast({
