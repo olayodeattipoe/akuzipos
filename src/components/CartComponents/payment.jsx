@@ -33,6 +33,31 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         ? orderTypes 
         : orderTypes.filter(type => type.value === "onsite");
 
+    const sanitizeCartItems = (container) => {
+        const sanitized = JSON.parse(JSON.stringify(container)); // Create deep copy
+        
+        Object.entries(sanitized).forEach(([containerId, items]) => {
+            items.forEach(item => {
+                // Sanitize base item fields
+                item.base_price = Number(item.base_price) || 0;
+                item.quantity = parseInt(item.quantity) || 1;
+                item.main_dish_price = Number(item.main_dish_price) || item.base_price || 0;
+                
+                // Sanitize customizations
+                if (item.customizations) {
+                    Object.values(item.customizations).forEach(choices => {
+                        Object.values(choices).forEach(choice => {
+                            choice.price = Number(choice.price) || 0;
+                            choice.quantity = parseInt(choice.quantity) || 0;
+                        });
+                    });
+                }
+            });
+        });
+
+        return sanitized;
+    };
+
     const sendOrderToManager = async (orderData) => {
         try {
             const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
@@ -68,16 +93,19 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     const handleSubmit = async () => {
         if (!validateDeliveryLocation()) return;
 
+        // Sanitize the container data
+        const sanitizedContainer = sanitizeCartItems(container);
+        
         const orderData = {
             user_id: userInfo.userId,
             name: userInfo.isLoggedIn 
                 ? userInfo.name 
                 : (guestName?.trim() || `Guest #${userInfo.userId}`),
             email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
-            containers: container,
+            containers: sanitizedContainer,
             order_type: orderType,
             payment_method: paymentMethod,
-            amount: totalAmount,
+            amount: Number(totalAmount),
             location: orderType === "delivery" ? deliveryLocation : "",
             orderMessage: order.orderMessage
         };
