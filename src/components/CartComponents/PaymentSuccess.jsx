@@ -16,7 +16,6 @@ export default function PaymentSuccess() {
         const userParams = localStorage.getItem('userParams') || '';
 
         if (reference) {
-            // Poll for payment confirmation
             const checkPayment = async () => {
                 try {
                     const response = await fetch(
@@ -45,12 +44,9 @@ export default function PaymentSuccess() {
                                 description: "Your order has been confirmed",
                             });
 
-                            // Clear data and redirect
-                            dispatch({ type: 'gl_variables/CLEAR_CART' });
+                            // Clear cart and generate new POS user ID
+                            dispatch({ type: 'gl_variables/clearCart' }); // This will generate a new POS user ID
                             localStorage.removeItem('userParams');
-                            localStorage.removeItem('userInfo');
-                            sessionStorage.removeItem('hasAttemptedRedirect');
-                            dispatch({ type: 'gl_variables/CLEAR_USER_INFO' });
 
                             setTimeout(() => {
                                 window.location.href = `https://pasara.netlify.app?returnUrl=${encodeURIComponent(window.location.origin)}`;
