@@ -96,25 +96,24 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         // Sanitize the container data
         const sanitizedContainer = sanitizeCartItems(container);
         
-   
-
+        // Create order data for both payment methods
+        const orderData = {
+            container,
+            userInfo: {
+                ...userInfo,
+                name: guestName || userInfo.name
+            },
+            order: {
+                order_type: orderType,
+                location: deliveryLocation,
+                phone: userInfo.phone
+            }
+        };
+        
         if (paymentMethod === "momo") {
             // Store order data before payment
-            const orderData = {
-                container,
-                userInfo: {
-                    ...userInfo,
-                    name: guestName || userInfo.name
-                },
-                order: {
-                    order_type: orderType,
-                    location: deliveryLocation,
-                    phone: userInfo.phone
-                }
-            };
-            
             localStorage.setItem('pendingOrder', JSON.stringify(orderData));
-
+            
             const paymentPayload = {
                 email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
                 amount: Math.round(Number(totalAmount) * 100)
@@ -151,7 +150,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 });
             }
         } else if (paymentMethod === "cash") {
-            // Keep existing cash payment logic
+            // Now orderData is available here
             sendOrderToManager(orderData)
                 .then(response => {
                     dispatch(clearCart());
