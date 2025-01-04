@@ -93,16 +93,14 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     const handleSubmit = async () => {
         if (!validateDeliveryLocation()) return;
 
-        // Sanitize the container data
-        const sanitizedContainer = sanitizeCartItems(container);
-        
+        // Create base order data without stringification
         const orderData = {
             user_id: userInfo.userId,
             name: userInfo.isLoggedIn 
                 ? userInfo.name 
                 : (guestName?.trim() || `Guest #${userInfo.userId}`),
             email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
-            containers: sanitizedContainer,
+            containers: container, // Use the container directly without sanitization
             order_type: orderType,
             payment_method: paymentMethod,
             amount: Number(totalAmount),
@@ -110,56 +108,40 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         };
 
         if (paymentMethod === "momo") {
-            // Store current URL parameters in localStorage
-            localStorage.setItem('userParams', window.location.search);
-
-            // Create payment payload
+            // Create payment payload without stringifying metadata
             const paymentPayload = {
                 email: orderData.email,
                 amount: Math.round(Number(totalAmount) * 100), // Convert to pesewas
-                metadata: orderData
+                metadata: orderData // Send as is, without stringification
             };
 
-            // Debug logging
-            console.log('Sending payment request with:', {
-                email: paymentPayload.email,
-                amount: paymentPayload.amount,
-                metadata: JSON.stringify(paymentPayload.metadata, null, 2)
-            });
+            try {
+                const response = await axios.post(
+                    "https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/",
+                    paymentPayload,
+                    {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        withCredentials: true
+                    }
+                );
 
-            axios.post(
-                "https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/",
-                paymentPayload,
-                {
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest'
-                    },
-                    withCredentials: true
-                }
-            )
-            .then(response => {
-                console.log('Payment response:', response.data);
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
-            })
-            .catch(error => {
-                console.error("Payment error details:", {
-                    message: error.message,
-                    response: error.response?.data,
-                    status: error.response?.status
-                });
-                
+            } catch (error) {
+                console.error("Payment error:", error);
                 toast({
                     title: "Payment Error",
                     description: error.response?.data?.message || "Failed to initialize payment",
                     variant: "destructive",
                 });
-            });
+            }
         } else if (paymentMethod === "cash") {
             // Handle cash payment
             sendOrderToManager(orderData)

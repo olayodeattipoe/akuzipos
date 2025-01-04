@@ -15,12 +15,12 @@ export default defineConfig(({ command }) => {
   if (command === 'serve') {
     // Development-specific settings
     config.server = {
-      host: '192.168.0.101',
+      host: '10.232.50.63',
       port: 5173,
       strictPort: true,
       cors: true,
       hmr: {
-        host: '192.168.0.101',
+        host: '10.232.50.63',
         clientPort: 5173,
         protocol: 'ws'
       },
