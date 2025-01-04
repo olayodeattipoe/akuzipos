@@ -27,10 +27,8 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
         { value: "delivery", label: "Delivery" }
     ];
 
-    // Filter order types based on login status
-    const availableOrderTypes = userInfo.isLoggedIn 
-        ? orderTypes 
-        : orderTypes.filter(type => type.value === "onsite");
+    // Remove the login-based filtering
+    const availableOrderTypes = orderTypes;  // All order types available to everyone
 
     const sanitizeCartItems = (container) => {
         const sanitized = JSON.parse(JSON.stringify(container)); // Create deep copy
@@ -178,11 +176,6 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 <DialogHeader>
                     <DialogTitle className="text-white">Complete Your Order</DialogTitle>
                     <DialogDescription className="text-gray-400">
-                        {!userInfo.isLoggedIn && (
-                            <div className="mb-4 p-3 bg-yellow-400/10 border border-yellow-400/20 rounded-lg text-yellow-400 text-sm">
-                                Note: Only dine-in orders are available for guests. Please log in to access takeaway and delivery options.
-                            </div>
-                        )}
                         Choose your order type and payment method
                     </DialogDescription>
                 </DialogHeader>
