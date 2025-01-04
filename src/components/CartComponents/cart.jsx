@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { ShoppingBag01Icon } from 'hugeicons-react';
@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import Payment from './payment';
 import { ShoppingCart } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Lock } from 'lucide-react';
 
 const EmptyCart = () => {
     return (
@@ -70,11 +71,14 @@ export default function Cart({ buttonClassName }) {
     };
 
     const CartItem = ({ item }) => {
-        // Calculate main product total based on food type
-        const mainProductTotal = item.food_type === 'SA' 
-            ? item.base_price * item.quantity 
-            : item.main_dish_price || item.base_price || 0;
-        
+        // Calculate main product total based on food type and pricing type
+        const mainProductTotal = useMemo(() => {
+            if (item.food_type === 'SA') {
+                return item.base_price * item.quantity;
+            }
+            return item.main_dish_price || item.base_price || 0;
+        }, [item]);
+
         const calculateCustomizationsTotal = () => {
             let total = 0;
             if (item.customizations) {
@@ -83,11 +87,10 @@ export default function Cart({ buttonClassName }) {
                         // Only include if the choice is available
                         if (choice.is_available) {
                             if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
+                                // For package INC items, always include their price
                                 total += choice.price;
-                            } else {
-                                if (choice.quantity > 0) {
-                                    total += choice.price;
-                                }
+                            } else if (choice.quantity > 0) {
+                                total += choice.price;
                             }
                         }
                     });
@@ -97,36 +100,40 @@ export default function Cart({ buttonClassName }) {
         };
 
         const renderCustomizations = () => {
-            return Object.entries(item.customizations || {}).map(([optionId, choices]) => (
-                <div key={optionId} className="space-y-1">
-                    {Object.entries(choices).map(([choiceName, choiceData]) => {
-                        // Skip rendering if not available
-                        if (!choiceData.is_available) return null;
+            if (!item.customizations) return null;
 
-                        const customizationTotal = choiceData.quantity * choiceData.price;
+            return (
+                <div className="mt-2 space-y-2">
+                    {Object.entries(item.customizations).map(([category, choices]) => {
+                        const availableChoices = Object.entries(choices)
+                            .filter(([_, choice]) => choice.is_available && choice.quantity > 0);
+
+                        if (availableChoices.length === 0) return null;
+
                         return (
-                            <div key={choiceName} className="flex items-center justify-between">
-                                <div className="flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <span className="text-[11px] text-gray-400">
-                                            {choiceName}
-                                            {choiceData.quantity > 1 && ` ×${choiceData.quantity}`}
-                                        </span>
-                                        {choiceData.pricing_type === 'FIX' && (
-                                            <span className="text-[10px] text-gray-500">
-                                                GHS {choiceData.price.toFixed(2)} each
-                                            </span>
-                                        )}
-                                    </div>
+                            <div key={category} className="space-y-1">
+                                <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
+                                    {category}
                                 </div>
-                                <span className="text-[11px] text-gray-400 ml-4">
-                                    GHS {customizationTotal.toFixed(2)}
-                                </span>
+                                <div className="pl-2 space-y-1">
+                                    {availableChoices.map(([choiceName, choice]) => (
+                                        <div key={choiceName} 
+                                             className="flex justify-between items-center text-[11px]">
+                                            <div className="text-gray-400">
+                                                • {choiceName}
+                                                {choice.quantity > 1 && ` ×${choice.quantity}`}
+                                            </div>
+                                            <span className="text-gray-500">
+                                                GHS {choice.price.toFixed(2)}
+                                            </span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         );
                     })}
                 </div>
-            ));
+            );
         };
 
         const itemTotal = mainProductTotal + calculateCustomizationsTotal();
@@ -154,7 +161,13 @@ export default function Cart({ buttonClassName }) {
                                 GHS {mainProductTotal.toFixed(2)}
                             </span>
                         </div>
-                        {item.customizations && renderCustomizations()}
+                        {renderCustomizations()}
+                        <div className="mt-2 pt-2 border-t border-gray-800/50 flex justify-between items-center">
+                            <span className="text-sm text-gray-400">Total</span>
+                            <span className="text-sm font-medium text-yellow-400">
+                                GHS {itemTotal.toFixed(2)}
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>
