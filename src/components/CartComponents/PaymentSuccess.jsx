@@ -10,6 +10,8 @@ export default function PaymentSuccess() {
     const { toast } = useToast();
     const [searchParams] = useSearchParams();
     const order = useSelector((state) => state.gl_variables.order);
+    const container = useSelector((state) => state.gl_variables.container);
+    const userInfo = useSelector((state) => state.gl_variables.userInfo);
 
     useEffect(() => {
         const reference = searchParams.get('reference');
@@ -25,6 +27,19 @@ export default function PaymentSuccess() {
                     if (response.ok) {
                         const data = await response.json();
                         if (data.success) {
+                            // Prepare complete order data
+                            const completeOrder = {
+                                user_id: userInfo.userId,
+                                name: userInfo.name,
+                                email: userInfo.email,
+                                containers: container,
+                                payment_reference: reference,
+                                payment_method: 'momo',
+                                order_type: order.order_type || 'onsite',
+                                location: order.location || '',
+                                phone: order.phone || userInfo.phone || ''
+                            };
+
                             // Send order to order manager
                             await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
                                 method: 'POST',
@@ -32,11 +47,7 @@ export default function PaymentSuccess() {
                                     'Content-Type': 'application/json',
                                     'Accept': 'application/json',
                                 },
-                                body: JSON.stringify({
-                                    ...order,
-                                    payment_reference: reference,
-                                    payment_method: 'momo'
-                                })
+                                body: JSON.stringify(completeOrder)
                             });
 
                             toast({
@@ -44,8 +55,7 @@ export default function PaymentSuccess() {
                                 description: "Your order has been confirmed",
                             });
 
-                            // Clear cart and generate new POS user ID
-                            dispatch({ type: 'gl_variables/clearCart' }); // This will generate a new POS user ID
+                            dispatch({ type: 'gl_variables/clearCart' });
                             localStorage.removeItem('userParams');
 
                             setTimeout(() => {
@@ -55,7 +65,6 @@ export default function PaymentSuccess() {
                             return;
                         }
                     }
-                    // If we get here, keep polling
                     setTimeout(checkPayment, 2000);
                 } catch (error) {
                     console.error('Error:', error);
