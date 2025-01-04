@@ -80,7 +80,8 @@ export default function Cart({ buttonClassName }) {
             if (item.customizations) {
                 Object.entries(item.customizations).forEach(([optionId, choices]) => {
                     Object.entries(choices).forEach(([choiceName, choice]) => {
-                        if (choice.is_available) {  // Only include if available
+                        // Only include if the choice is available
+                        if (choice.is_available) {
                             if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
                                 total += choice.price;
                             } else {
@@ -96,57 +97,36 @@ export default function Cart({ buttonClassName }) {
         };
 
         const renderCustomizations = () => {
-            if (!item.customizations) return null;
+            return Object.entries(item.customizations || {}).map(([optionId, choices]) => (
+                <div key={optionId} className="space-y-1">
+                    {Object.entries(choices).map(([choiceName, choiceData]) => {
+                        // Skip rendering if not available
+                        if (!choiceData.is_available) return null;
 
-            return (
-                <div className="mt-2 space-y-2">
-                    {Object.entries(item.customizations).map(([category, choices]) => (
-                        <div key={category} className="space-y-1">
-                            <div className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
-                                {category}
-                            </div>
-                            <div className="pl-2 space-y-1">
-                                {Object.entries(choices).map(([choiceName, choiceData]) => {
-                                    const customizationTotal = choiceData.price * choiceData.quantity;
-                                    
-                                    return (
-                                        <div key={choiceName} 
-                                             className="flex justify-between items-start">
-                                            <div className="flex flex-col flex-1">
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="text-[11px] text-gray-400">
-                                                        {choiceData.name}
-                                                        {choiceData.pricing_type === 'FIX' && choiceData.quantity > 0 && 
-                                                            <span className="ml-1 text-gray-500">×{choiceData.quantity}</span>
-                                                        }
-                                                    </span>
-                                                    <Badge variant="outline" 
-                                                           className={cn(
-                                                             "px-1 py-0 text-[10px]",
-                                                             choiceData.pricing_type === 'FIX' 
-                                                               ? "border-yellow-400/20 text-yellow-400/70"
-                                                               : "border-blue-400/20 text-blue-400/70"
-                                                           )}>
-                                                        {choiceData.pricing_type}
-                                                    </Badge>
-                                                </div>
-                                                {choiceData.pricing_type === 'FIX' && (
-                                                    <span className="text-[10px] text-gray-500">
-                                                        GHS {choiceData.price.toFixed(2)} each
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <span className="text-[11px] text-gray-400 ml-4">
-                                                GHS {customizationTotal.toFixed(2)}
+                        const customizationTotal = choiceData.quantity * choiceData.price;
+                        return (
+                            <div key={choiceName} className="flex items-center justify-between">
+                                <div className="flex-1">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-[11px] text-gray-400">
+                                            {choiceName}
+                                            {choiceData.quantity > 1 && ` ×${choiceData.quantity}`}
+                                        </span>
+                                        {choiceData.pricing_type === 'FIX' && (
+                                            <span className="text-[10px] text-gray-500">
+                                                GHS {choiceData.price.toFixed(2)} each
                                             </span>
-                                        </div>
-                                    );
-                                })}
+                                        )}
+                                    </div>
+                                </div>
+                                <span className="text-[11px] text-gray-400 ml-4">
+                                    GHS {customizationTotal.toFixed(2)}
+                                </span>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
-            );
+            ));
         };
 
         const itemTotal = mainProductTotal + calculateCustomizationsTotal();
@@ -174,13 +154,7 @@ export default function Cart({ buttonClassName }) {
                                 GHS {mainProductTotal.toFixed(2)}
                             </span>
                         </div>
-                        {renderCustomizations()}
-                        <div className="mt-2 pt-2 border-t border-gray-800/50 flex justify-between items-center">
-                            <span className="text-sm text-gray-400">Total</span>
-                            <span className="text-sm font-medium text-yellow-400">
-                                GHS {itemTotal.toFixed(2)}
-                            </span>
-                        </div>
+                        {item.customizations && renderCustomizations()}
                     </div>
                 </div>
             </div>
