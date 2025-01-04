@@ -117,6 +117,12 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 metadata: orderData // Send as object, not stringified
             };
 
+            // Debug logs
+            console.log('Order Data:', orderData);
+            console.log('Payment Payload:', paymentPayload);
+            console.log('Container Structure:', container);
+            console.log('Sanitized Container:', sanitizedContainer);
+
             try {
                 const response = await axios.post(
                     "https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/",
@@ -131,16 +137,22 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     }
                 );
 
+                // Debug log for response
+                console.log('Payment Response:', response.data);
+
                 if (response.data.status) {
                     window.location.href = response.data.data.authorization_url;
                 } else {
                     throw new Error(response.data.message || 'Payment initialization failed');
                 }
             } catch (error) {
+                // More detailed error logging
+                console.error("Full error object:", error);
                 console.error("Payment error details:", {
                     message: error.message,
                     response: error.response?.data,
-                    status: error.response?.status
+                    status: error.response?.status,
+                    requestData: paymentPayload // Log what we tried to send
                 });
                 
                 toast({
