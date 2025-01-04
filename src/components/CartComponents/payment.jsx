@@ -7,7 +7,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import axios from 'axios';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import store from '@/gl_Var_Store';
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
 import { clearCart } from '@/gl_Var_Reducers';
@@ -101,7 +100,9 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             name: userInfo.isLoggedIn 
                 ? userInfo.name 
                 : (guestName?.trim() || `Guest #${userInfo.userId}`),
-            email: userInfo.isLoggedIn ? userInfo.email : `${userInfo.userId}@example.com`,
+            email: userInfo.isLoggedIn 
+                ? userInfo.email 
+                : `pos@calabash.com`,  // Default email for POS users
             containers: sanitizedContainer,
             order_type: orderType,
             payment_method: paymentMethod,
