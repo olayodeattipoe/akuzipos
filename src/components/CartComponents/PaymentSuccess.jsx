@@ -19,7 +19,7 @@ export default function PaymentSuccess() {
             const verifyPayment = async () => {
                 try {
                     const response = await fetch(
-                        `https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/check-momo-payment-status/${reference}`,
+                        `https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/momo-status/${reference}`,
                         {
                             method: 'GET',
                             headers: {
