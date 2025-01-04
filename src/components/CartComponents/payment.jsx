@@ -138,7 +138,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 : (guestName?.trim() || `Guest #${userInfo.userId}`),
             email: userInfo.isLoggedIn 
                 ? userInfo.email 
-                : 'Guest@gmail.com',
+                : `${userInfo.userId}@gmail.com`,
             containers: sanitizedContainer,
             order_type: orderType,
             payment_method: paymentMethod,

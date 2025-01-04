@@ -37,7 +37,7 @@ const initialState = {
         name: 'POS User',
         userId: generateValidUserId(),
         isLoggedIn: false,
-        email: 'Guest@gmail.com',
+        email: `${generateValidUserId()}@gmail.com`,
         phone: ''
     },
     orders: []
@@ -346,11 +346,12 @@ const gl_variables = createSlice({
             }
         },
 
-        clearCart: (state) => {
+        clearCart: (state) => { 
             state.container = {};
             state.selectedContainer = 1;
             // Generate new POS user ID after cart is cleared
             state.userInfo.userId = generateValidUserId();
+            state.userInfo.email = `${generateValidUserId()}@gmail.com`;
         },
 
         UPDATE_MAIN_DISH: (state, action) => {
