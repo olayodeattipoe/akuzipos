@@ -399,7 +399,7 @@ const gl_variables = createSlice({
             state.userInfo = {
                 ...state.userInfo,
                 userId: newUserId,
-                email: 'pos@calabash.com',
+                email: 'Guest@gmail.com',
                 isLoggedIn: false
             };
         },
