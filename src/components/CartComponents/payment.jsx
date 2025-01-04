@@ -146,8 +146,10 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             location: orderType === "delivery" ? deliveryLocation : "",
         };
 
+        // Store order data in localStorage before payment
+        localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+
         if (paymentMethod === "momo") {
-            // Handle MoMo payment through Paystack
             await initializePaystackPayment(orderData);
         } else if (paymentMethod === "cash") {
             // Existing cash payment logic
