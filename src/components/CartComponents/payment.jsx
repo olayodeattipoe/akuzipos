@@ -96,7 +96,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     const initializePaystackPayment = async (orderData) => {
         try {
             // Initialize payment with Paystack
-            const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/payment/initialize/', {
+            const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
