@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useDispatch } from 'react-redux';
-import { regeneratePosUserId } from '@/gl_Var_Reducers';
+import { regenerateUserId } from '@/gl_Var_Reducers';
 
 export default function CashPaymentRequests() {
     const [pendingPayments, setPendingPayments] = useState([]);
@@ -61,7 +61,7 @@ export default function CashPaymentRequests() {
                 });
 
                 if (status === 'approved') {
-                    dispatch(regeneratePosUserId());
+                    dispatch(regenerateUserId());
                 }
 
                 fetchPendingPayments();
