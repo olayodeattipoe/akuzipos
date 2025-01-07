@@ -422,6 +422,13 @@ const gl_variables = createSlice({
             if (orderIndex !== -1 && state.orders) {
                 state.orders[orderIndex] = { ...state.orders[orderIndex], ...updates };
             }
+        },
+
+        setUserInfo: (state, action) => {
+            state.userInfo = {
+                ...state.userInfo,
+                ...action.payload
+            };
         }
     }
 })
@@ -451,6 +458,7 @@ export const {
     regenerateUserId,
     setOrders,
     addOrder,
-    updateOrder
+    updateOrder,
+    setUserInfo
 } = gl_variables.actions;
 export default gl_variables.reducer;

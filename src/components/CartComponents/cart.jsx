@@ -1,17 +1,13 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ShoppingBag01Icon } from 'hugeicons-react';
+import { ShoppingCart } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
-import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useSelector, useDispatch } from 'react-redux';
 import { removeItemFromContainer } from '@/gl_Var_Reducers';
-import { X } from "lucide-react";
 import { useNavigate } from 'react-router-dom';
 import Payment from './payment';
-import { ShoppingCart } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { Lock } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
 
 const EmptyCart = () => {
     return (
@@ -27,6 +23,7 @@ const EmptyCart = () => {
 
 export default function Cart({ buttonClassName }) {
     const dispatch = useDispatch();
+    const { toast } = useToast();
     const container = useSelector((state) => state.gl_variables.container);
     const order = useSelector((state) => state.gl_variables.order);
     const userInfo = useSelector((state) => state.gl_variables.userInfo);
@@ -288,20 +285,29 @@ export default function Cart({ buttonClassName }) {
     };
 
     const handleProceedToCheckout = () => {
-        // Only append userId for default guest names
-        const formattedName = guestName 
-            ? guestName.trim()
-            : `Guest #${userInfo.userId}`;
-
+        // Validate guest name
+        const trimmedName = guestName.trim();
+        if (!trimmedName) {
+            toast({
+                title: "Name Required",
+                description: "Please enter your name before proceeding to checkout",
+                variant: "destructive",
+                duration: 3000,
+            });
+            return;
+        }
+        
         console.log("Current Container State:", container);
         setShowPayment(true);
         
-        const orderData = {
-            name: formattedName,
-            containers: container
-        };
-        
-        console.log("Order Data:", orderData);
+        return (
+            <Payment 
+                isOpen={showPayment}
+                onClose={() => setShowPayment(false)}
+                totalAmount={calculateGrandTotal()}
+                guestName={trimmedName}
+            />
+        );
     };
 
     return (
@@ -333,29 +339,28 @@ export default function Cart({ buttonClassName }) {
                         
                         <div className="mt-auto pt-2 space-y-2 sticky bottom-0 bg-gray-950/95 backdrop-blur-xl">
                             <div className="border-t border-gray-800 pt-2">
-                                {/* Guest Name Input - Only show for non-logged-in users */}
-                                {!userInfo.isLoggedIn && (
-                                    <div className="mb-2">
-                                        <div className="relative">
-                                            <input
-                                                id="guestName"
-                                                type="text"
-                                                placeholder="Enter your name (optional)"
-                                                className="w-full px-3 py-1.5 text-sm bg-gray-800/50 border border-gray-700/50 
-                                                 rounded-lg text-gray-300 placeholder-gray-500
-                                                 focus:outline-none focus:ring-2 focus:ring-yellow-500/20 
-                                                 focus:border-yellow-500/30 transition-all duration-200"
-                                                value={guestName}
-                                                onChange={(e) => setGuestName(e.target.value)}
-                                            />
-                                            <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                                <span className="text-xs text-gray-500">
-                                                    {guestName ? `${guestName}` : `Guest #${userInfo.userId}`}
-                                                </span>
-                                            </div>
+                                {/* Guest Name Input */}
+                                <div className="mb-2">
+                                    <div className="relative">
+                                        <input
+                                            id="guestName"
+                                            type="text"
+                                            required
+                                            placeholder="Enter your name (required)"
+                                            className="w-full px-3 py-1.5 text-sm bg-gray-800/50 border border-gray-700/50 
+                                                     rounded-lg text-gray-300 placeholder-gray-500
+                                                     focus:outline-none focus:ring-2 focus:ring-yellow-500/20 
+                                                     focus:border-yellow-500/30 transition-all duration-200"
+                                            value={guestName}
+                                            onChange={(e) => setGuestName(e.target.value)}
+                                        />
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                            <span className="text-xs text-gray-500">
+                                                {guestName ? `${guestName}` : `Guest #${userInfo.userId}`}
+                                            </span>
                                         </div>
                                     </div>
-                                )}
+                                </div>
 
                                 <div className="flex items-center justify-between mb-2">
                                     <span className="text-base font-medium text-gray-300">Grand Total</span>
@@ -383,7 +388,7 @@ export default function Cart({ buttonClassName }) {
                     isOpen={showPayment}
                     onClose={() => setShowPayment(false)}
                     totalAmount={calculateGrandTotal()}
-                    guestName={guestName ? guestName.trim() : `Guest #${userInfo.userId}`}
+                    guestName={guestName.trim()}
                 />
             </SheetContent>
         </Sheet>

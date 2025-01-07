@@ -20,6 +20,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     const container = useSelector((state) => state.gl_variables.container);
     const order = useSelector((state) => state.gl_variables.order);
     const userInfo = useSelector((state) => state.gl_variables.userInfo);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const orderTypes = [
         { value: "onsite", label: "Dine In" },
@@ -126,32 +127,29 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
 
     const handleSubmit = async () => {
         if (!validateDeliveryLocation()) return;
-
-        const sanitizedContainer = sanitizeCartItems(container);
         
-        const orderData = {
-            user_id: userInfo.userId,
-            name: userInfo.isLoggedIn 
-                ? userInfo.name 
-                : (guestName?.trim() || `Guest #${userInfo.userId}`),
-            email: userInfo.isLoggedIn 
-                ? userInfo.email 
-                : `${userInfo.userId}@gmail.com`,
-            containers: sanitizedContainer,
-            order_type: orderType,
-            payment_method: paymentMethod,
-            amount: Number(totalAmount),
-            location: orderType === "delivery" ? deliveryLocation : "",
-        };
+        setIsSubmitting(true); // Set loading state to true when starting submission
+        
+        try {
+            const sanitizedContainer = sanitizeCartItems(container);
+            
+            const orderData = {
+                user_id: userInfo.userId,
+                name: guestName?.trim() || `Guest #${userInfo.userId}`,
+                email: `${userInfo.userId}@gmail.com`,
+                containers: sanitizedContainer,
+                order_type: orderType,
+                payment_method: paymentMethod,
+                amount: Number(totalAmount),
+                location: orderType === "delivery" ? deliveryLocation : "",
+            };
 
-        // Store order data in localStorage before payment
-        localStorage.setItem('pendingOrder', JSON.stringify(orderData));
+            // Store order data in localStorage before payment
+            localStorage.setItem('pendingOrder', JSON.stringify(orderData));
 
-        if (paymentMethod === "momo") {
-            await initializePaystackPayment(orderData);
-        } else if (paymentMethod === "cash") {
-            // Existing cash payment logic
-            try {
+            if (paymentMethod === "momo") {
+                await initializePaystackPayment(orderData);
+            } else if (paymentMethod === "cash") {
                 const response = await sendOrderToManager(orderData);
                 dispatch(clearCart());
                 toast({
@@ -160,13 +158,15 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                     duration: 7000,
                 });
                 onClose();
-            } catch (error) {
-                toast({
-                    title: "Order Failed",
-                    description: error.message || "Failed to place order",
-                    variant: "destructive",
-                });
             }
+        } catch (error) {
+            toast({
+                title: "Order Failed",
+                description: error.message || "Failed to place order",
+                variant: "destructive",
+            });
+        } finally {
+            setIsSubmitting(false); // Reset loading state regardless of success/failure
         }
     };
 
@@ -264,8 +264,16 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                         type="submit"
                         className="bg-yellow-500 text-gray-900 hover:bg-yellow-600"
                         onClick={handleSubmit}
+                        disabled={isSubmitting}
                     >
-                        Confirm Order
+                        {isSubmitting ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-gray-900/20 border-t-gray-900 rounded-full animate-spin" />
+                                Processing...
+                            </div>
+                        ) : (
+                            'Confirm Order'
+                        )}
                     </Button>
                 </DialogFooter>
             </DialogContent>
