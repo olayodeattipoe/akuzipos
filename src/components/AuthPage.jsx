@@ -8,9 +8,19 @@ export default function AuthPage() {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        // Redirect if already authenticated
-        if (localStorage.getItem('isAuthenticated')) {
-            navigate('/', { replace: true });
+        // Redirect if already authenticated and not expired
+        const isAuthenticated = localStorage.getItem('isAuthenticated');
+        const authExpiration = localStorage.getItem('authExpiration');
+        
+        if (isAuthenticated && authExpiration) {
+            // Check if the authentication is still valid
+            if (new Date().getTime() <= parseInt(authExpiration)) {
+                navigate('/', { replace: true });
+            } else {
+                // Clear expired auth data
+                localStorage.removeItem('isAuthenticated');
+                localStorage.removeItem('authExpiration');
+            }
         }
     }, [navigate]);
 
@@ -19,8 +29,10 @@ export default function AuthPage() {
         
         // Hardcoded password check
         if (password === 'pos123') {
-            // Set authentication in localStorage
+            // Set authentication in localStorage with expiration
+            const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours from now
             localStorage.setItem('isAuthenticated', 'true');
+            localStorage.setItem('authExpiration', expirationTime.toString());
             
             dispatch({
                 type: 'gl_variables/setUserInfo',
