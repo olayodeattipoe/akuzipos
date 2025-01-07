@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import store from '@/gl_Var_Store';
 import axios from 'axios';
 import PaymentSuccess from './components/CartComponents/PaymentSuccess';
+import MaintenancePage from './components/MaintenancePage';
 
 function App() {
   const dispatch = useDispatch();
@@ -20,8 +21,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Home/>} />
-        <Route path="/payment/success/*" element={<PaymentSuccess/>} />
+        <Route path="*" element={<MaintenancePage />} />
       </Routes>
     </Router>
   );
