@@ -401,7 +401,6 @@ const gl_variables = createSlice({
                 ...state.userInfo,
                 userId: newUserId,
                 email: 'Guest@gmail.com',
-                isLoggedIn: true
             };
         },
 
