@@ -71,15 +71,19 @@ export default function PaymentSuccess() {
                             }
                         }
 
-                        localStorage.removeItem('pendingOrder');
-
                         toast({
                             title: "Payment Successful",
                             description: "Your order has been confirmed",
                             duration: 5000,
                         });
-
+                        
                         dispatch(clearCart());
+                        // Clear guest name in parent window
+                        if (window.opener && window.opener.setGuestName) {
+                            window.opener.setGuestName('');
+                        }
+                        
+                        localStorage.removeItem('pendingOrder');
                         
                         setTimeout(() => {
                             navigate('/');

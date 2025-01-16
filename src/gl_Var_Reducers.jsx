@@ -1,13 +1,8 @@
 import {createSlice} from "@reduxjs/toolkit"; 
-
-// Keep track of used UUIDs to prevent duplicates
-const usedUUIDs = new Set();
+import { v4 as uuidv4 } from 'uuid';
 
 const generateValidUserId = () => {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
-    const letter = alphabet[Math.floor(Math.random() * alphabet.length)];
-    const numbers = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-    return `${letter}${numbers}`;
+    return uuidv4();
 };
 
 const initialState = {

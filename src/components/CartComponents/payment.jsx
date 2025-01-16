@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
 import { clearCart } from '@/gl_Var_Reducers';
 
-export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
+export default function Payment({ isOpen, onClose, totalAmount, guestName, setGuestName }) {
     const { toast } = useToast();
     const dispatch = useDispatch();
     const [orderType, setOrderType] = useState("onsite");
@@ -128,7 +128,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
     const handleSubmit = async () => {
         if (!validateDeliveryLocation()) return;
         
-        setIsSubmitting(true); // Set loading state to true when starting submission
+        setIsSubmitting(true);
         
         try {
             const sanitizedContainer = sanitizeCartItems(container);
@@ -152,6 +152,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
             } else if (paymentMethod === "cash") {
                 const response = await sendOrderToManager(orderData);
                 dispatch(clearCart());
+                setGuestName('');
                 toast({
                     title: "Quick Tip",
                     description: "For active orders, please don't close the browser app completely.",
@@ -166,7 +167,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                 variant: "destructive",
             });
         } finally {
-            setIsSubmitting(false); // Reset loading state regardless of success/failure
+            setIsSubmitting(false);
         }
     };
 
@@ -223,7 +224,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName }) {
                         </div>
                     )}
 
-                    {/* Payment Method Selection */}
+                    {/* Payment Method Selection */}@
                     <div className="space-y-2">
                         <Label htmlFor="paymentMethod" className="text-white">
                             Payment Method
