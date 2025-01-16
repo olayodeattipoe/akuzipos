@@ -40,16 +40,6 @@ function App() {
     if (isAuthenticated && authExpiration) {
       // Check if the authentication is still valid
       if (new Date().getTime() <= parseInt(authExpiration)) {
-        dispatch({
-          type: 'gl_variables/setUserInfo',
-          payload: {
-            isLoggedIn: true,
-            name: 'POS User',
-            role: 'POS',
-            userId: 'Z123',
-            email: 'pos@example.com'
-          }
-        });
         dispatch({ type: 'websocket/connect' });
       } else {
         // Clear expired auth data
