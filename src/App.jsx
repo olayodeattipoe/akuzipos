@@ -4,6 +4,7 @@ import Home from './home';
 import AuthPage from './components/AuthPage';
 import { useDispatch, useSelector } from 'react-redux';
 import PaymentSuccess from './components/CartComponents/PaymentSuccess';
+import { uuidv4 } from 'uuid';
 
 const ProtectedRoute = ({ children }) => {
   const userInfo = useSelector((state) => state.gl_variables.userInfo);
@@ -33,19 +34,28 @@ function App() {
   const dispatch = useDispatch();
   
   useEffect(() => {
-    // Check if user was previously authenticated and not expired
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     const authExpiration = localStorage.getItem('authExpiration');
     
     if (isAuthenticated && authExpiration) {
-      // Check if the authentication is still valid
-      if (new Date().getTime() <= parseInt(authExpiration)) {
-        dispatch({ type: 'websocket/connect' });
-      } else {
-        // Clear expired auth data
-        localStorage.removeItem('isAuthenticated');
-        localStorage.removeItem('authExpiration');
-      }
+        if (new Date().getTime() <= parseInt(authExpiration)) {
+            // Generate new user_id for this session
+            const userId = uuidv4();
+            dispatch({
+                type: 'gl_variables/setUserInfo',
+                payload: {
+                    isLoggedIn: true,
+                    name: 'POS User',
+                    role: 'POS',
+                    userId: userId,
+                    email: `${userId}@gmail.com`
+                }
+            });
+            dispatch({ type: 'websocket/connect' });
+        } else {
+            localStorage.removeItem('isAuthenticated');
+            localStorage.removeItem('authExpiration');
+        }
     }
   }, [dispatch]);
 

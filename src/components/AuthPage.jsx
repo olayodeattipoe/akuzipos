@@ -30,18 +30,22 @@ export default function AuthPage() {
         
         if (password === 'pos123') {
             const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+            
+            // Only store auth data, not user_id
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('authExpiration', expirationTime.toString());
             
-            const newUserId = uuidv4();
+            // Generate new user_id for this session
+            const userId = uuidv4();
+            
             dispatch({
                 type: 'gl_variables/setUserInfo',
                 payload: {
                     isLoggedIn: true,
                     name: 'POS User',
                     role: 'POS',
-                    userId: newUserId,
-                    email: `${newUserId}@gmail.com`
+                    userId: userId,
+                    email: `${userId}@gmail.com`
                 }
             });
             dispatch({ type: 'websocket/connect' });
