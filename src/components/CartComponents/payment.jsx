@@ -152,7 +152,6 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
             } else if (paymentMethod === "cash") {
                 const response = await sendOrderToManager(orderData);
                 dispatch(clearCart());
-                setGuestName('');
                 toast({
                     title: "Quick Tip",
                     description: "For active orders, please don't close the browser app completely.",
