@@ -36,6 +36,16 @@ export default function Cart({ buttonClassName }) {
         console.log("order",order)
     },[container])
 
+    useEffect(() => {
+        // Expose setGuestName to window for PaymentSuccess component
+        window.setGuestName = setGuestName;
+        
+        // Cleanup
+        return () => {
+            delete window.setGuestName;
+        };
+    }, []);
+
     const calculateItemTotal = (item) => {
         if (item.food_type === 'MD') {
             let customizationTotal = 0;
@@ -306,6 +316,7 @@ export default function Cart({ buttonClassName }) {
                 onClose={() => setShowPayment(false)}
                 totalAmount={calculateGrandTotal()}
                 guestName={trimmedName}
+                setGuestName={setGuestName}
             />
         );
     };
@@ -356,7 +367,7 @@ export default function Cart({ buttonClassName }) {
                                         />
                                         <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                             <span className="text-xs text-gray-500">
-                                                {guestName ? `${guestName}` : `Guest #${userInfo.userId}`}
+                                                {guestName ? `${guestName}` : `Guest #${userInfo.userId.slice(0, 4)}`}
                                             </span>
                                         </div>
                                     </div>

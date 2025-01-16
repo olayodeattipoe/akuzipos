@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
+import { v4 as uuidv4 } from 'uuid';
 
 export default function AuthPage() {
     const [password, setPassword] = useState('');
@@ -27,21 +28,20 @@ export default function AuthPage() {
     const handleSubmit = (e) => {
         e.preventDefault();
         
-        // Hardcoded password check
         if (password === 'pos123') {
-            // Set authentication in localStorage with expiration
-            const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000); // 24 hours from now
+            const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000);
             localStorage.setItem('isAuthenticated', 'true');
             localStorage.setItem('authExpiration', expirationTime.toString());
             
+            const newUserId = uuidv4();
             dispatch({
                 type: 'gl_variables/setUserInfo',
                 payload: {
                     isLoggedIn: true,
                     name: 'POS User',
                     role: 'POS',
-                    userId: 'Z123',
-                    email: 'pos@example.com'
+                    userId: newUserId,
+                    email: `${newUserId}@gmail.com`
                 }
             });
             dispatch({ type: 'websocket/connect' });

@@ -28,13 +28,7 @@ const initialState = {
         Payment: "",
         isLoggedIn: false,
     },
-    userInfo: {
-        name: 'POS User',
-        userId: generateValidUserId(),
-        isLoggedIn: false,
-        email: `${generateValidUserId()}@gmail.com`,
-        phone: ''
-    },
+    userInfo: {},
     orders: []
 };
 
