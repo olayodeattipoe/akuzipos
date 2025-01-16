@@ -36,16 +36,6 @@ export default function Cart({ buttonClassName }) {
         console.log("order",order)
     },[container])
 
-    useEffect(() => {
-        // Expose setGuestName to window for PaymentSuccess component
-        window.setGuestName = setGuestName;
-        
-        // Cleanup
-        return () => {
-            delete window.setGuestName;
-        };
-    }, []);
-
     const calculateItemTotal = (item) => {
         if (item.food_type === 'MD') {
             let customizationTotal = 0;
@@ -309,16 +299,6 @@ export default function Cart({ buttonClassName }) {
         
         console.log("Current Container State:", container);
         setShowPayment(true);
-        
-        return (
-            <Payment 
-                isOpen={showPayment}
-                onClose={() => setShowPayment(false)}
-                totalAmount={calculateGrandTotal()}
-                guestName={trimmedName}
-                setGuestName={setGuestName}
-            />
-        );
     };
 
     return (

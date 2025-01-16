@@ -78,11 +78,6 @@ export default function PaymentSuccess() {
                         });
                         
                         dispatch(clearCart());
-                        // Clear guest name in parent window
-                        if (window.opener && window.opener.setGuestName) {
-                            window.opener.setGuestName('');
-                        }
-                        
                         localStorage.removeItem('pendingOrder');
                         
                         setTimeout(() => {
