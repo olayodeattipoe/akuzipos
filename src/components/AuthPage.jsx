@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
-
+    
 export default function AuthPage() {
     const [password, setPassword] = useState('');
     const navigate = useNavigate();

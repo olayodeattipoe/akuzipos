@@ -4,7 +4,7 @@ import Home from './home';
 import AuthPage from './components/AuthPage';
 import { useDispatch, useSelector } from 'react-redux';
 import PaymentSuccess from './components/CartComponents/PaymentSuccess';
-import { uuidv4 } from 'uuid';
+import { v4 as uuidv4 } from 'uuid';
 
 const ProtectedRoute = ({ children }) => {
   const userInfo = useSelector((state) => state.gl_variables.userInfo);
