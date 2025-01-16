@@ -224,7 +224,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                         </div>
                     )}
 
-                    {/* Payment Method Selection */}@
+                    {/* Payment Method Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="paymentMethod" className="text-white">
                             Payment Method
