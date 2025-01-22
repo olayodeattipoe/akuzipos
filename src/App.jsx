@@ -10,24 +10,43 @@ const ProtectedRoute = ({ children }) => {
   const userInfo = useSelector((state) => state.gl_variables.userInfo);
   
   // Check both authentication and expiration
-  const checkAuth = () => {
+  const checkAuth = async () => {
     const isAuthenticated = localStorage.getItem('isAuthenticated');
     const authExpiration = localStorage.getItem('authExpiration');
+    const accessToken = localStorage.getItem('accessToken');
     
-    if (!isAuthenticated || !authExpiration) return false;
-    
-    // Check if the authentication has expired
-    if (new Date().getTime() > parseInt(authExpiration)) {
-      // Clear expired auth data
-      localStorage.removeItem('isAuthenticated');
-      localStorage.removeItem('authExpiration');
-      return false;
+    if (!isAuthenticated || !authExpiration || !accessToken) {
+        return <Navigate to="/auth" replace />;
     }
     
-    return true;
+    if (new Date().getTime() > parseInt(authExpiration)) {
+        // Clear expired auth data
+        localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('authExpiration');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        return <Navigate to="/auth" replace />;
+    }
+    
+    try {
+        const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/mcc_primaryLogic/verify-token/', {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`
+            }
+        });
+        const data = await response.json();
+        return data.status === 'success' ? children : <Navigate to="/auth" replace />;
+    } catch (error) {
+        return <Navigate to="/auth" replace />;
+    }
   };
 
-  return (userInfo.isLoggedIn || checkAuth()) ? children : <Navigate to="/auth" />;
+  // If not logged in, redirect to auth page immediately
+  if (!userInfo.isLoggedIn) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  return children;
 };
 
 function App() {
@@ -72,6 +91,8 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* Catch all other routes and redirect to auth if not authenticated */}
+        <Route path="*" element={<Navigate to="/auth" replace />} />
       </Routes>
     </Router>
   );

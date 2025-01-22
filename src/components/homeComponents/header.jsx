@@ -5,21 +5,49 @@ import {
   ShoppingBasket, 
   History, 
   CreditCard,
-  Building2
+  Building2,
+  LogOut
 } from 'lucide-react';
 import Cart from "../CartComponents/cart";
 import { useSelector, useDispatch } from "react-redux";
 import { addNewContainer, setActiveTab } from "@/gl_Var_Reducers";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useState } from "react";
+import { useNavigate } from 'react-router-dom';
 
 export default function Header() {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const userInfo = useSelector((state) => state.gl_variables.userInfo);
   const activeTab = useSelector((state) => state.gl_variables.activeTab);
+  const adminUsername = localStorage.getItem('adminUsername');
+  
+  console.log('Current Admin User:', adminUsername);
 
   const handleAddContainer = () => {
     dispatch(addNewContainer());
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('isAuthenticated');
+    localStorage.removeItem('authExpiration');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('adminUsername');
+    
+    dispatch({
+      type: 'gl_variables/setUserInfo',
+      payload: {
+        isLoggedIn: false,
+        name: null,
+        role: null,
+        userId: null,
+        email: null,
+        adminUser: null
+      }
+    });
+    
+    navigate('/auth');
   };
 
   return (
@@ -63,16 +91,31 @@ export default function Header() {
               </div>
             </div>
 
-            {/* User Info */}
+            {/* User Info with Logout Button */}
             {userInfo.name && (
-              <div className="flex items-center gap-4 px-6 py-3 rounded-xl
-                            bg-gradient-to-r from-gray-800/50 to-gray-800/30
-                            border border-gray-700/50 backdrop-blur-sm">
-                <UserCircle className="h-12 w-12 text-yellow-400" />
-                <div className="flex flex-col">
-                  <span className="text-base font-medium text-gray-200">{userInfo.name}</span>
-                  <span className="text-sm text-yellow-400/80">System Administrator</span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 px-6 py-3 rounded-xl
+                              bg-gradient-to-r from-gray-800/50 to-gray-800/30
+                              border border-gray-700/50 backdrop-blur-sm">
+                  <UserCircle className="h-12 w-12 text-yellow-400" />
+                  <div className="flex flex-col">
+                    <span className="text-base font-medium text-gray-200">
+                      Admin: {adminUsername}
+                    </span>
+                    <span className="text-sm text-yellow-400/80">
+                      System Administrator
+                    </span>
+                  </div>
                 </div>
+                <button
+                  onClick={handleLogout}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg
+                           bg-red-500/10 text-red-400 hover:bg-red-500/20
+                           border border-red-500/20 transition-colors"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Logout
+                </button>
               </div>
             )}
           </div>

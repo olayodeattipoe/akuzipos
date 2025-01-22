@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, Minus, Plus } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useSelector, useDispatch } from 'react-redux';
 import { removeItemFromContainer } from '@/gl_Var_Reducers';
@@ -27,6 +27,7 @@ export default function Cart({ buttonClassName }) {
     const container = useSelector((state) => state.gl_variables.container);
     const order = useSelector((state) => state.gl_variables.order);
     const userInfo = useSelector((state) => state.gl_variables.userInfo);
+    const repeaters = useSelector((state) => state.gl_variables.repeater);
     const navigate = useNavigate();
     const [showPayment, setShowPayment] = useState(false);
     const [guestName, setGuestName] = useState('');
@@ -173,25 +174,37 @@ export default function Cart({ buttonClassName }) {
 
     const BasketContainer = ({ containerId, items }) => {
         const dispatch = useDispatch();
+        const repeater = repeaters[containerId] || 1;
         
+        const handleRepeaterChange = (action) => {
+            let newValue = repeater;
+            if (action === 'increase') {
+                newValue = repeater + 1;
+            } else if (action === 'decrease' && repeater > 1) {
+                newValue = repeater - 1;
+            }
+            
+            dispatch({
+                type: 'gl_variables/UPDATE_REPEATER',
+                payload: { containerId, value: newValue }
+            });
+        };
+
         const calculateBasketTotal = () => {
             const itemsTotal = items.reduce((total, item) => {
-                // Skip if the item itself is unavailable
                 if (!item.is_available) return total;
                 
                 let customizationTotal = 0;
 
-                // Calculate customizations total
                 if (item.customizations) {
                     Object.entries(item.customizations).forEach(([optionId, optionChoices]) => {
                         Object.entries(optionChoices).forEach(([choiceName, choice]) => {
-                            // Only include if the choice is available
                             if (choice.is_available) {
                                 if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
-                                    customizationTotal += choice.price;
+                                    customizationTotal += Number(choice.price) || 0;
                                 } else {
                                     if (choice.quantity > 0) {
-                                        customizationTotal += choice.price;
+                                        customizationTotal += Number(choice.price) || 0;
                                     }
                                 }
                             }
@@ -199,37 +212,60 @@ export default function Cart({ buttonClassName }) {
                     });
                 }
 
-                // Calculate price based on food type and pricing type
                 if (item.food_type === 'SA') {
-                    return total + (item.base_price * item.quantity);
+                    return total + (Number(item.base_price) * Number(item.quantity) || 0);
                 } else if (item.food_type === 'MD' || item.food_type === 'PK') {
                     if (item.pricing_type === 'INC') {
-                        return total + item.main_dish_price + customizationTotal;
+                        return total + Number(item.main_dish_price || 0) + customizationTotal;
                     } else {
-                        return total + (item.base_price * (item.quantity || 1)) + customizationTotal;
+                        return total + (Number(item.base_price || 0) * Number(item.quantity || 1)) + customizationTotal;
                     }
                 }
                 return total;
             }, 0);
 
-            return itemsTotal;
+            return itemsTotal || 0;
         };
 
         const basketTotal = calculateBasketTotal();
-        
+        const finalTotal = basketTotal * repeater;
+
         return (
             <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-3">
                         <Badge className="px-2.5 py-0.5 bg-gray-900 text-gray-300 border-gray-800">
-                            Basket {containerId}
+                            Basket {parseInt(containerId)}
                         </Badge>
                         <span className="text-xs text-gray-500">
                             {items.length} item{items.length !== 1 ? 's' : ''}
                         </span>
                     </div>
-                    <div className="text-lg font-medium text-yellow-400">
-                        GHS {basketTotal.toFixed(2)}
+                    <div className="flex items-center gap-2">
+                        <div className="flex items-center bg-gray-800/50 rounded-lg border border-gray-700">
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-white"
+                                onClick={() => handleRepeaterChange('decrease')}
+                            >
+                                <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-8 text-center text-sm text-gray-200">
+                                {repeater}×
+                            </span>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-gray-400 hover:text-white"
+                                onClick={() => handleRepeaterChange('increase')}
+                            >
+                                <Plus className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <div className="text-lg font-medium text-yellow-400">
+                            GHS {finalTotal.toFixed(2)}
+                        </div>
                     </div>
                 </div>
                 <div className="space-y-2">
@@ -244,16 +280,13 @@ export default function Cart({ buttonClassName }) {
     const calculateGrandTotal = () => {
         return Object.entries(container).reduce((grandTotal, [containerId, items]) => {
             const basketTotal = items.reduce((total, item) => {
-                // Skip if the item itself is unavailable
                 if (!item.is_available) return total;
                 
                 let customizationTotal = 0;
 
-                // Calculate customizations total
                 if (item.customizations) {
                     Object.entries(item.customizations).forEach(([optionId, optionChoices]) => {
                         Object.entries(optionChoices).forEach(([choiceName, choice]) => {
-                            // Only include if the choice is available
                             if (choice.is_available) {
                                 if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
                                     customizationTotal += choice.price;
@@ -267,7 +300,6 @@ export default function Cart({ buttonClassName }) {
                     });
                 }
 
-                // Calculate price based on food type and pricing type
                 if (item.food_type === 'SA') {
                     return total + (item.base_price * item.quantity);
                 } else if (item.food_type === 'MD' || item.food_type === 'PK') {
@@ -280,7 +312,9 @@ export default function Cart({ buttonClassName }) {
                 return total;
             }, 0);
             
-            return grandTotal + basketTotal;
+            // Use the repeaters from props
+            const repeater = repeaters[containerId] || 1;
+            return grandTotal + (basketTotal * repeater);
         }, 0);
     };
 

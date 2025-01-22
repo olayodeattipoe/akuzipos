@@ -21,6 +21,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
     const order = useSelector((state) => state.gl_variables.order);
     const userInfo = useSelector((state) => state.gl_variables.userInfo);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const repeaters = useSelector((state) => state.gl_variables.repeater);
 
     const orderTypes = [
         { value: "onsite", label: "Dine In" },
@@ -56,8 +57,45 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
         return sanitized;
     };
 
+    const calculateBasketTotal = (items) => {
+        return items.reduce((total, item) => {
+            if (!item.is_available) return total;
+            
+            let customizationTotal = 0;
+
+            if (item.customizations) {
+                Object.entries(item.customizations).forEach(([optionId, optionChoices]) => {
+                    Object.entries(optionChoices).forEach(([choiceName, choice]) => {
+                        if (choice.is_available) {
+                            if (item.food_type === 'PK' && choice.pricing_type === 'INC') {
+                                customizationTotal += Number(choice.price) || 0;
+                            } else {
+                                if (choice.quantity > 0) {
+                                    customizationTotal += Number(choice.price) || 0;
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            if (item.food_type === 'SA') {
+                return total + (Number(item.base_price) * Number(item.quantity) || 0);
+            } else if (item.food_type === 'MD' || item.food_type === 'PK') {
+                if (item.pricing_type === 'INC') {
+                    return total + Number(item.main_dish_price || 0) + customizationTotal;
+                } else {
+                    return total + (Number(item.base_price || 0) * Number(item.quantity || 1)) + customizationTotal;
+                }
+            }
+            return total;
+        }, 0);
+    };
+
     const sendOrderToManager = async (orderData) => {
-        console.log('sendOrderToManager received:', orderData); // Debug log
+        const adminId = localStorage.getItem('adminId');
+        const adminUsername = localStorage.getItem('adminUsername');
+        console.log('Processing order with admin:', adminUsername, 'ID:', adminId); // Debug log
         
         try {
             const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
@@ -69,14 +107,20 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 },
                 mode: 'cors',
                 credentials: 'include',
-                body: JSON.stringify(orderData)
+                body: JSON.stringify({
+                    ...orderData,
+                    adminId: adminId, // Send admin ID instead of username
+                    adminUser: adminUsername // Keep username for display purposes
+                })
             });
+            
+            console.log('Order data sent:', { ...orderData, adminId, adminUser: adminUsername }); // Debug log
             
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
-            console.log('Order manager response data:', data); // Debug log
+            console.log('Order manager response data:', data);
             return data;
         } catch (error) {
             console.error('Error sending order:', error);
@@ -132,23 +176,59 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
         
         try {
             const sanitizedContainer = sanitizeCartItems(container);
+            console.log('Sanitized Container:', sanitizedContainer); // Debug log
+            console.log('Repeaters:', repeaters); // Debug log
             
+            // Modified order data structure to include repeater information
             const orderData = {
                 user_id: userInfo.userId,
                 name: guestName?.trim() || `Guest #${userInfo.userId}`,
                 email: `${userInfo.userId}@gmail.com`,
-                containers: sanitizedContainer,
+                containers: Object.entries(sanitizedContainer).map(([containerId, items]) => {
+                    console.log(`Processing container ${containerId}:`, items); // Debug log
+                    console.log(`Repeater value for container ${containerId}:`, repeaters[containerId]); // Debug log
+                    
+                    return {
+                        containerId,
+                        repeatCount: repeaters[containerId] || 1,
+                        items,
+                        containerTotal: calculateBasketTotal(items) * (repeaters[containerId] || 1)
+                    };
+                }),
                 order_type: orderType,
-                payment_method: paymentMethod,
+                payment_method: 'momo',
                 amount: Number(totalAmount),
                 location: orderType === "delivery" ? deliveryLocation : "",
             };
+
+            console.log('Final order data:', orderData); // Debug log
 
             // Store order data in localStorage before payment
             localStorage.setItem('pendingOrder', JSON.stringify(orderData));
 
             if (paymentMethod === "momo") {
-                await initializePaystackPayment(orderData);
+                const adminId = localStorage.getItem('adminId');
+                const adminUsername = localStorage.getItem('adminUsername');
+                
+                const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/momo_initialize/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        ...orderData,
+                        adminId: adminId,
+                        adminUser: adminUsername
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Payment initialization failed');
+                }
+
+                const data = await response.json();
+                window.location.href = data.data.authorization_url;
             } else if (paymentMethod === "cash") {
                 const response = await sendOrderToManager(orderData);
                 dispatch(clearCart());
@@ -160,6 +240,8 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 onClose();
             }
         } catch (error) {
+            console.error('Order submission error:', error); // Detailed error logging
+            console.error('Error stack:', error.stack); // Stack trace
             toast({
                 title: "Order Failed",
                 description: error.message || "Failed to place order",

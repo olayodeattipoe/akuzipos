@@ -4,6 +4,7 @@ import { useDispatch } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
     
 export default function AuthPage() {
+    const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const navigate = useNavigate();
     const dispatch = useDispatch();
@@ -25,38 +26,83 @@ export default function AuthPage() {
         }
     }, [navigate]);
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         
-        if (password === 'pos123') {
-            const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000);
-            
-            // Only store auth data, not user_id
-            localStorage.setItem('isAuthenticated', 'true');
-            localStorage.setItem('authExpiration', expirationTime.toString());
-            
-            // Generate new user_id for this session
-            const userId = uuidv4();
-            
-            dispatch({
-                type: 'gl_variables/setUserInfo',
-                payload: {
-                    isLoggedIn: true,
-                    name: 'POS User',
-                    role: 'POS',
-                    userId: userId,
-                    email: `${userId}@gmail.com`
-                }
+        try {
+            const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/mcc_primaryLogic/admin-login/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    password: password
+                })
             });
-            dispatch({ type: 'websocket/connect' });
-            navigate('/', { replace: true });
-        } else {
-            alert('Invalid password');
+
+            const data = await response.json();
+            
+            if (data.status === 'success') {
+                const expirationTime = new Date().getTime() + (24 * 60 * 60 * 1000);
+                const userId = uuidv4();
+                
+                localStorage.setItem('isAuthenticated', 'true');
+                localStorage.setItem('authExpiration', expirationTime.toString());
+                localStorage.setItem('accessToken', data.access);
+                localStorage.setItem('refreshToken', data.refresh);
+                localStorage.setItem('adminUsername', username);
+                localStorage.setItem('adminId', data.user_id.toString());
+                
+                dispatch({
+                    type: 'gl_variables/setUserInfo',
+                    payload: {
+                        isLoggedIn: true,
+                        name: 'POS User',
+                        role: 'POS',
+                        userId: userId,
+                        email: `${userId}@gmail.com`,
+                        adminUser: username,
+                        adminId: data.user_id
+                    }
+                });
+                
+                console.log('Admin ID from backend:', data.user_id);
+                
+                dispatch({ type: 'websocket/connect' });
+                navigate('/', { replace: true });
+            } else {
+                alert('Invalid credentials');
+            }
+        } catch (error) {
+            console.error('Login error:', error);
+            alert('Login failed');
         }
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
+        const refreshToken = localStorage.getItem('refreshToken');
+        
+        try {
+            await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/mcc_primaryLogic/admin-logout/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem('accessToken')}`
+                },
+                body: JSON.stringify({
+                    refresh_token: refreshToken
+                })
+            });
+        } catch (error) {
+            console.error('Logout error:', error);
+        }
+        
         localStorage.removeItem('isAuthenticated');
+        localStorage.removeItem('authExpiration');
+        localStorage.removeItem('accessToken');
+        localStorage.removeItem('refreshToken');
+        
         dispatch({
             type: 'gl_variables/setUserInfo',
             payload: {
@@ -73,9 +119,16 @@ export default function AuthPage() {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-900">
             <div className="bg-gray-800 p-8 rounded-lg shadow-lg w-96">
-                <h1 className="text-2xl font-bold text-yellow-400 mb-6">POS Login</h1>
+                <h1 className="text-2xl font-bold text-yellow-400 mb-6">Admin Login</h1>
                 <form onSubmit={handleSubmit}>
                     <div className="mb-4">
+                        <input
+                            type="text"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            placeholder="Enter username"
+                            className="w-full p-2 rounded bg-gray-700 text-white border border-gray-600 focus:border-yellow-400 focus:outline-none mb-4"
+                        />
                         <input
                             type="password"
                             value={password}

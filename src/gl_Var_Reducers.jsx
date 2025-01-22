@@ -17,19 +17,16 @@ const initialState = {
     currentMainDish: null,
     customOptions: {},
     activeTab: 'place-order',
-    order: {
-        user_id: "",
-        name: "",
-        email: "",
-        order_type: "",
-        location: "",
-        phone: "",
-        containers: {},
-        Payment: "",
+    order: [],
+    userInfo: {
         isLoggedIn: false,
+        name: null,
+        role: null,
+        userId: null,
+        email: null
     },
-    userInfo: {},
-    orders: []
+    orders: [],
+    repeater: {},
 };
 
 const HandleContainerEntries = (state, action) => {
@@ -160,7 +157,11 @@ const gl_variables = createSlice({
         },
 
         addNewContainer: (state) => {
-            const newContainerId = Object.keys(state.container).length + 1;
+            // Find the highest existing container ID
+            const existingIds = Object.keys(state.container).map(Number);
+            const newContainerId = existingIds.length > 0 ? Math.max(...existingIds) + 1 : 1;
+            
+            // Create new container with the calculated ID
             state.container[newContainerId] = [];
             state.selectedContainer = newContainerId;
         },
@@ -418,7 +419,15 @@ const gl_variables = createSlice({
                 ...state.userInfo,
                 ...action.payload
             };
-        }
+        },
+
+        UPDATE_REPEATER: (state, action) => {
+            const { containerId, value } = action.payload;
+            if (!state.repeater[containerId]) {
+                state.repeater[containerId] = 1;
+            }
+            state.repeater[containerId] = value;
+        },
     }
 })
 
@@ -448,6 +457,7 @@ export const {
     setOrders,
     addOrder,
     updateOrder,
-    setUserInfo
+    setUserInfo,
+    UPDATE_REPEATER
 } = gl_variables.actions;
 export default gl_variables.reducer;
