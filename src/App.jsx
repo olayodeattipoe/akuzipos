@@ -29,7 +29,7 @@ const ProtectedRoute = ({ children }) => {
     }
     
     try {
-        const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/mcc_primaryLogic/verify-token/', {
+        const response = await fetch('https://calabash-management-centre-95kaw.ondigitalocean.app/mcc_primaryLogic/verify-token/', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
