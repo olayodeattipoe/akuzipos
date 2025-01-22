@@ -210,7 +210,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 const adminId = localStorage.getItem('adminId');
                 const adminUsername = localStorage.getItem('adminUsername');
                 
-                const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/momo_initialize/', {
+                const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize_payment/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
