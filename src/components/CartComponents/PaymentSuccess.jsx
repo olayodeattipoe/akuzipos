@@ -30,7 +30,7 @@ export default function PaymentSuccess() {
             while (retryCount < maxRetries) {
                 try {
                     const response = await fetch(
-                        `https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/momo-status/${reference}/`
+                        `https://belspaymentcentre-qsnwb.ondigitalocean.app/payment/momo-status/${reference}/`
                     );
 
                     if (!response.ok) {

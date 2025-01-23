@@ -30,7 +30,7 @@ export default function AuthPage() {
         e.preventDefault();
         
         try {
-            const response = await fetch('https://calabash-management-centre-95kaw.ondigitalocean.app/mcc_primaryLogic/admin-login/', {
+            const response = await fetch('https://belsmanagementcentre-r33to.ondigitalocean.app/mcc_primaryLogic/admin-login/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,7 +84,7 @@ export default function AuthPage() {
         const refreshToken = localStorage.getItem('refreshToken');
         
         try {
-            await fetch('https://calabash-management-centre-95kaw.ondigitalocean.app/mcc_primaryLogic/admin-logout/', {
+            await fetch('https://belsmanagementcentre-r33to.ondigitalocean.app/mcc_primaryLogic/admin-logout/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

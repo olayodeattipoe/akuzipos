@@ -98,7 +98,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
         console.log('Processing order with admin:', adminUsername, 'ID:', adminId); // Debug log
         
         try {
-            const response = await fetch('https://orders-management-control-centre-l52z5.ondigitalocean.app/orderManager/process_order/', {
+            const response = await fetch('https://belsordersmanagementcentre-ruodd.ondigitalocean.app/orderManager/process_order/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -210,7 +210,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 const adminId = localStorage.getItem('adminId');
                 const adminUsername = localStorage.getItem('adminUsername');
                 
-                const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/initialize/', {
+                const response = await fetch('https://belspaymentcentre-qsnwb.ondigitalocean.app/payment/initialize/', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

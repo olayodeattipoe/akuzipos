@@ -12,7 +12,7 @@ export default function CashPaymentRequests() {
     // Fetch pending payments
     const fetchPendingPayments = async () => {
         try {
-            const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/cash-payment/pending/', {
+            const response = await fetch('https://belspaymentcentre-qsnwb.ondigitalocean.app/payment/cash-payment/pending/', {
                 method: 'GET',
                 headers: {
                     'Content-Type': 'application/json',
@@ -42,7 +42,7 @@ export default function CashPaymentRequests() {
 
     const handlePaymentResponse = async (requestId, status) => {
         try {
-            const response = await fetch('https://calabash-payment-control-centre-tuuve.ondigitalocean.app/payment/cash-payment/update/', {
+            const response = await fetch('https://belspaymentcentre-qsnwb.ondigitalocean.app/payment/cash-payment/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
