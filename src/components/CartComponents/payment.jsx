@@ -196,7 +196,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                     };
                 }),
                 order_type: orderType,
-                payment_method: 'momo',
+                payment_method: paymentMethod,
                 amount: Number(totalAmount),
                 location: orderType === "delivery" ? deliveryLocation : "",
             };
