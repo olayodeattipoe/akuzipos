@@ -15,12 +15,12 @@ export default defineConfig(({ command }) => {
   if (command === 'serve') {
     // Development-specific settings
     config.server = {
-      host: '10.40.32.242',
+      host: 'localhost',
       port: 5173,
       strictPort: true,
       cors: true,
       hmr: {
-        host: '10.40.32.242',
+        host: 'localhost',
         clientPort: 5173,
         protocol: 'ws'
       },

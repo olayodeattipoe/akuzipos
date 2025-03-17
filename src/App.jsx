@@ -5,6 +5,7 @@ import AuthPage from './components/AuthPage';
 import { useDispatch, useSelector } from 'react-redux';
 import PaymentSuccess from './components/CartComponents/PaymentSuccess';
 import { v4 as uuidv4 } from 'uuid';
+import MaintenancePage from './components/MaintenancePage';
 
 const ProtectedRoute = ({ children }) => {
   const userInfo = useSelector((state) => state.gl_variables.userInfo);
@@ -87,7 +88,8 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              <Home />
+              {/**<Home />**/}
+              <MaintenancePage />
             </ProtectedRoute>
           }
         />

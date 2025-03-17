@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --host 10.132.199.96",
+    "dev": "vite --host localhost",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

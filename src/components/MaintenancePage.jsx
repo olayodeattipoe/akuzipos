@@ -14,16 +14,15 @@ export default function MaintenancePage() {
                 </h1>
                 
                 <p className="text-gray-400 text-lg mb-8">
-                    We're currently performing scheduled maintenance to improve our services. 
-                    We'll be back shortly.
+                Your subscription has ended. To continue access, please renew your subscription. 
+                Activation takes effect immediately after renewal."
+                    
                 </p>
                 
                 <div className="bg-gray-800 rounded-lg p-6 mb-8">
                     <h2 className="text-yellow-500 font-semibold mb-2">
-                        Expected Duration
                     </h2>
                     <p className="text-gray-300">
-                        Our maintenance is expected to be completed within the next few hours.
                     </p>
                 </div>
                 
