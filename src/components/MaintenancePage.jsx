@@ -10,7 +10,7 @@ export default function MaintenancePage() {
                 </div>
                 
                 <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
-                    System Maintenance
+                    Subscription Ended – Continue Access
                 </h1>
                 
                 <p className="text-gray-400 text-lg mb-8">
