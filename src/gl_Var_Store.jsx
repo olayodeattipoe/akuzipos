@@ -9,7 +9,7 @@ const store = configureStore({
         SizeConfig_Reducers : SizeConfig_Reducers
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(webSocketMiddleware('wss://belsmobileweb-yxzgj.ondigitalocean.app/ws/socket-server/mobileWebcc'))
+        getDefaultMiddleware().concat(webSocketMiddleware('wss://calabash-mobilweb-control-centre-rpjrm.ondigitalocean.app/ws/socket-server/mobileWebcc'))
     
 })
 
