@@ -88,8 +88,8 @@ function App() {
           path="/"
           element={
             <ProtectedRoute>
-              {/**<Home />**/}
-              <MaintenancePage />
+              <Home />
+              {/**<MaintenancePage />**/}
             </ProtectedRoute>
           }
         />
