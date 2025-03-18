@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
     }
     
     try {
-        const response = await fetch('https://calabash-management-centre-95kaw.ondigitalocean.app/mcc_primaryLogic/verify-token/', {
+        const response = await fetch('https://management.calabash.online/mcc_primaryLogic/verify-token/', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
