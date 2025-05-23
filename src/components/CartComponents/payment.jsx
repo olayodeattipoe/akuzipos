@@ -11,11 +11,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast"
 import { clearCart } from '@/gl_Var_Reducers';
 
-export default function Payment({ isOpen, onClose, totalAmount, guestName, setGuestName }) {
+export default function Payment({ isOpen, onClose, totalAmount, guestName, setGuestName, userPhone, userEmail }) {
     const { toast } = useToast();
     const dispatch = useDispatch();
     const [orderType, setOrderType] = useState("onsite");
-    const [paymentMethod, setPaymentMethod] = useState("momo");
+    const [paymentMethod, setPaymentMethod] = useState("hubtel");
     const [deliveryLocation, setDeliveryLocation] = useState("");
     const container = useSelector((state) => state.gl_variables.container);
     const order = useSelector((state) => state.gl_variables.order);
@@ -98,6 +98,13 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
         console.log('Processing order with admin:', adminUsername, 'ID:', adminId); // Debug log
         
         try {
+            // Log the complete request data for debugging
+            console.log('Sending order data:', JSON.stringify({
+                ...orderData,
+                adminId: adminId,
+                adminUser: adminUsername
+            }, null, 2));
+            
             const response = await fetch('https://orders.calabash.online/orderManager/process_order/', {
                 method: 'POST',
                 headers: {
@@ -114,11 +121,17 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 })
             });
             
-            console.log('Order data sent:', { ...orderData, adminId, adminUser: adminUsername }); // Debug log
-            
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                // Try to get error details from response
+                try {
+                    const errorData = await response.json();
+                    throw new Error(`Server error (${response.status}): ${JSON.stringify(errorData)}`);
+                } catch (parseError) {
+                    // If we can't parse JSON, use status text
+                    throw new Error(`HTTP error! status: ${response.status}, statusText: ${response.statusText}`);
+                }
             }
+            
             const data = await response.json();
             console.log('Order manager response data:', data);
             return data;
@@ -136,28 +149,62 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
         return true;
     };
 
-    const initializePaystackPayment = async (orderData) => {
+    // Format phone number for Hubtel
+    const formatPhoneNumber = (phone) => {
+        let formattedPhone = phone;
+        if (!formattedPhone.startsWith("233")) {
+            if (formattedPhone.startsWith("0")) {
+                formattedPhone = "233" + formattedPhone.slice(1);
+            } else {
+                formattedPhone = "233" + formattedPhone;
+            }
+        }
+        return formattedPhone;
+    };
+
+    // Initialize Hubtel payment
+    const initializeHubtelPayment = async (orderData) => {
         try {
-            // Initialize payment with Paystack
-            const response = await fetch('https://payment.calabash.online/payment/initialize/', {
+            // Format phone number
+            orderData.phone = formatPhoneNumber(orderData.phone);
+            
+            // Get admin information - same approach as sendOrderToManager
+            const adminId = localStorage.getItem('adminId');
+            const adminUsername = localStorage.getItem('adminUsername');
+            console.log('Processing payment with admin:', adminUsername, 'ID:', adminId);
+            
+            console.log("Initializing Hubtel payment with data:", orderData);
+            
+            // Initialize payment with Hubtel
+            const response = await fetch('https://payment.calabash.online/payment/hubtel/initialize/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
                 },
+                mode: 'cors',
+                credentials: 'include',
                 body: JSON.stringify({
-                    email: orderData.email,
-                    amount: orderData.amount * 100, // Convert to pesewas
+                    ...orderData,
+                    adminId: adminId,
+                    adminUser: adminUsername
                 })
             });
 
             if (!response.ok) {
-                throw new Error('Payment initialization failed');
+                const errorData = await response.json();
+                throw new Error(errorData.message || 'Payment initialization failed');
             }
 
             const data = await response.json();
+            console.log("Hubtel response:", data);
             
-            // Redirect to Paystack payment page
-            window.location.href = data.data.authorization_url;
+            // Store the client reference for status checking
+            localStorage.setItem('hubtelReference', data.Data.ClientReference);
+            
+            // Redirect to payment status page
+            window.location.href = '/payment/status?reference=' + data.Data.ClientReference;
             
         } catch (error) {
             console.error('Payment initialization error:', error);
@@ -176,18 +223,16 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
         
         try {
             const sanitizedContainer = sanitizeCartItems(container);
-            console.log('Sanitized Container:', sanitizedContainer); // Debug log
-            console.log('Repeaters:', repeaters); // Debug log
+            console.log('Sanitized Container:', sanitizedContainer);
+            console.log('Repeaters:', repeaters);
             
             // Modified order data structure to include repeater information
             const orderData = {
                 user_id: userInfo.userId,
                 name: guestName?.trim() || `Guest #${userInfo.userId}`,
-                email: `${userInfo.userId}@gmail.com`,
+                email: userEmail || `${userInfo.userId}@gmail.com`,
+                phone: userPhone || "",
                 containers: Object.entries(sanitizedContainer).map(([containerId, items]) => {
-                    console.log(`Processing container ${containerId}:`, items); // Debug log
-                    console.log(`Repeater value for container ${containerId}:`, repeaters[containerId]); // Debug log
-                    
                     return {
                         containerId,
                         repeatCount: repeaters[containerId] || 1,
@@ -201,34 +246,14 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 location: orderType === "delivery" ? deliveryLocation : "",
             };
 
-            console.log('Final order data:', orderData); // Debug log
+            console.log('Final order data:', orderData);
+            console.log('Phone number in order:', orderData.phone);
 
             // Store order data in localStorage before payment
             localStorage.setItem('pendingOrder', JSON.stringify(orderData));
 
-            if (paymentMethod === "momo") {
-                const adminId = localStorage.getItem('adminId');
-                const adminUsername = localStorage.getItem('adminUsername');
-                
-                const response = await fetch('https://payment.calabash.online/payment/initialize/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        ...orderData,
-                        adminId: adminId,
-                        adminUser: adminUsername
-                    })
-                });
-
-                if (!response.ok) {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Payment initialization failed');
-                }
-
-                const data = await response.json();
-                window.location.href = data.data.authorization_url;
+            if (paymentMethod === "hubtel") {
+                await initializeHubtelPayment(orderData);
             } else if (paymentMethod === "cash") {
                 const response = await sendOrderToManager(orderData);
                 dispatch(clearCart());
@@ -246,7 +271,15 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 title: "Order Failed",
                 description: error.message || "Failed to place order",
                 variant: "destructive",
+                duration: 7000,
             });
+            
+            // Provide more helpful debug info for specific error types
+            if (error.message.includes('Server error')) {
+                console.log('This appears to be a server-side error. Check your backend logs.');
+            } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+                console.log('This appears to be a network connectivity issue. Is the backend server running?');
+            }
         } finally {
             setIsSubmitting(false);
         }
@@ -263,6 +296,18 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 </DialogHeader>
 
                 <div className="space-y-6 py-4">
+                    {/* Customer Information Display */}
+                    <div className="space-y-2">
+                        <Label htmlFor="customerInfo" className="text-white">
+                            Customer Information
+                        </Label>
+                        <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-3 text-sm">
+                            <div className="font-medium text-white">{guestName}</div>
+                            {userPhone && <div className="text-gray-400 mt-1">Phone: {userPhone}</div>}
+                            {userEmail && <div className="text-gray-400">Email: {userEmail}</div>}
+                        </div>
+                    </div>
+
                     {/* Order Type Selection */}
                     <div className="space-y-2">
                         <Label htmlFor="orderType" className="text-white">
@@ -318,7 +363,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                                 <SelectValue placeholder="Select payment method" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="momo">Mobile Money</SelectItem>
+                                <SelectItem value="hubtel">Mobile Money</SelectItem>
                                 <SelectItem value="cash">Cash</SelectItem>
                             </SelectContent>
                         </Select>

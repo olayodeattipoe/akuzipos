@@ -15,18 +15,10 @@ export default defineConfig(({ command }) => {
   if (command === 'serve') {
     // Development-specific settings
     config.server = {
-      host: 'localhost',
+      host: true, // This allows access from any IP
       port: 5173,
       strictPort: true,
-      cors: true,
-      hmr: {
-        host: 'localhost',
-        clientPort: 5173,
-        protocol: 'ws'
-      },
-      watch: {
-        usePolling: true
-      }
+      cors: true
     }
   }
 

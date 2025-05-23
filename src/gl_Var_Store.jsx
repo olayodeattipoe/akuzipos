@@ -2,6 +2,7 @@ import { configureStore } from "@reduxjs/toolkit";
 import gl_Var_Reducers from './gl_Var_Reducers'
 import webSocketMiddleware from "./webSocketMiddleware";
 import SizeConfig_Reducers from "./SizeConfig_Reducers"
+import { WS_BASE_URL } from '@/config';
 
 const store = configureStore({
     reducer:{
@@ -9,7 +10,7 @@ const store = configureStore({
         SizeConfig_Reducers : SizeConfig_Reducers
     },
     middleware: (getDefaultMiddleware) =>
-        getDefaultMiddleware().concat(webSocketMiddleware('wss://mobileweb.calabash.online/ws/socket-server/mobileWebcc'))
+        getDefaultMiddleware().concat(webSocketMiddleware(`${WS_BASE_URL}/ws/socket-server/mobileWebcc`))
     
 })
 

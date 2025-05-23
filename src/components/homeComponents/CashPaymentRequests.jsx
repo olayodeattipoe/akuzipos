@@ -42,7 +42,7 @@ export default function CashPaymentRequests() {
 
     const handlePaymentResponse = async (requestId, status) => {
         try {
-            const response = await fetch('https://payment.calabash.online/payment/cash-payment/update/', {
+            const response = await fetch('/payment/cash-payment/update/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { v4 as uuidv4 } from 'uuid';
+import { API_BASE_URL } from '@/config';
     
 export default function AuthPage() {
     const [username, setUsername] = useState('');
@@ -30,7 +31,7 @@ export default function AuthPage() {
         e.preventDefault();
         
         try {
-            const response = await fetch('https://management.calabash.online/mcc_primaryLogic/admin-login/', {
+            const response = await fetch(`${API_BASE_URL}/mcc_primaryLogic/admin-login/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -84,7 +85,7 @@ export default function AuthPage() {
         const refreshToken = localStorage.getItem('refreshToken');
         
         try {
-            await fetch('https://management.calabash.online/mcc_primaryLogic/admin-logout/', {
+            await fetch(`${API_BASE_URL}/mcc_primaryLogic/admin-logout/`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

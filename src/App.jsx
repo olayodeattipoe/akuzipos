@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children }) => {
     }
     
     try {
-        const response = await fetch('https://management.calabash.online/mcc_primaryLogic/verify-token/', {
+        const response = await fetch('/mcc_primaryLogic/verify-token/', {
             headers: {
                 'Authorization': `Bearer ${accessToken}`
             }
@@ -84,6 +84,7 @@ function App() {
       <Routes>
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/payment/success/*" element={<PaymentSuccess />} />
+        <Route path="/payment/status" element={<PaymentSuccess />} />
         <Route
           path="/"
           element={

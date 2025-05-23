@@ -379,7 +379,7 @@ const gl_variables = createSlice({
             state.userInfo = {
                 name: '',
                 userId: '',
-                isLoggedIn: false,
+                isLoggedIn: true,
                 email: '',
                 phone: ''
             };

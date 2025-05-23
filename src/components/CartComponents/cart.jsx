@@ -1,13 +1,19 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Minus, Plus } from 'lucide-react';
+import { ShoppingCart, Minus, Plus, Loader2, Check, User, Phone, AlertCircle } from 'lucide-react';
 import { Badge } from "@/components/ui/badge";
 import { useSelector, useDispatch } from 'react-redux';
 import { removeItemFromContainer } from '@/gl_Var_Reducers';
 import { useNavigate } from 'react-router-dom';
 import Payment from './payment';
 import { useToast } from "@/hooks/use-toast";
+import axios from 'axios';
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 const EmptyCart = () => {
     return (
@@ -31,11 +37,140 @@ export default function Cart({ buttonClassName }) {
     const navigate = useNavigate();
     const [showPayment, setShowPayment] = useState(false);
     const [guestName, setGuestName] = useState('');
+    const [userSearchResults, setUserSearchResults] = useState([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [popoverOpen, setPopoverOpen] = useState(false);
+    const [userPhone, setUserPhone] = useState('');
+    const [userEmail, setUserEmail] = useState('');
+    const [commandOpen, setCommandOpen] = useState(false);
+    const searchContainerRef = useRef(null);
+    const [verificationStatus, setVerificationStatus] = useState(null);
+    const [isVerifying, setIsVerifying] = useState(false);
+    const [momoName, setMomoName] = useState('');
 
     useEffect(()=>{
         console.log("hesus",container)
         console.log("order",order)
     },[container])
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (searchContainerRef.current && !searchContainerRef.current.contains(event.target)) {
+                setCommandOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
+
+    // Function to search for users
+    const searchUsers = async (searchTerm) => {
+        if (!searchTerm || searchTerm.length < 3) {
+            setUserSearchResults([]);
+            setCommandOpen(false);
+            return;
+        }
+
+        setIsSearching(true);
+        
+        try {
+            console.log("Searching for users with term:", searchTerm);
+            
+            const response = await axios.post('https://management.calabash.online/mcc_primaryLogic/editables/', {
+                action: "search_users",
+                content: {
+                    query: searchTerm
+                }
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                //withCredentials: true
+            });
+
+            console.log("Full API response:", response);
+            
+            if (response.data && response.data.status === "success") {
+                const users = response.data.users || [];
+                console.log("Users returned from API:", users);
+                
+                // Log the structure of the first user if available
+                if (users && users.length > 0) {
+                    console.log("First user structure:", JSON.stringify(users[0], null, 2));
+                    console.log("User properties:", Object.keys(users[0]));
+                }
+                
+                setUserSearchResults(users);
+                setCommandOpen(true); // Always open if we made a search
+            } else {
+                console.log("API call succeeded but returned no results or error:", response.data);
+                setUserSearchResults([]);
+                setCommandOpen(true); // Keep open to show "No results" message
+            }
+        } catch (error) {
+            console.error('Error searching for users:', error);
+            console.error('Error details:', {
+                message: error.message,
+                response: error.response ? {
+                    status: error.response.status,
+                    data: error.response.data
+                } : 'No response data',
+                request: error.request ? 'Request made but no response received' : 'No request made'
+            });
+            
+            setUserSearchResults([]);
+            setCommandOpen(true); // Keep open to show error message
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
+    // New function to handle phone number search
+    const handlePhoneSearch = (phoneValue) => {
+        setUserPhone(phoneValue);
+        
+        if (phoneValue && phoneValue.length >= 3) {
+            // Search based on phone number
+            searchUsers(phoneValue);
+        }
+    };
+
+    // New function to select a customer
+    const selectCustomer = (user) => {
+        if (user) {
+            console.log("Selected customer:", user); // Debug log
+            setGuestName(user.name || "");
+            setUserPhone(user.phone || "");
+            setUserEmail(user.email || "");
+            setCommandOpen(false);
+        }
+    };
+
+    // Explicit handler for customer item click
+    const handleCustomerClick = (user) => {
+        console.log("Customer clicked:", user); // Debug log
+        console.log("User object type:", typeof user);
+        console.log("User object properties:", Object.keys(user));
+        console.log("User name property:", user.name);
+        console.log("User phone property:", user.phone);
+        console.log("User email property:", user.email);
+        
+        // Ensure we're handling the user object correctly
+        if (user && typeof user === 'object') {
+            selectCustomer({
+                name: user.name || "", 
+                phone: user.phone || "", 
+                email: user.email || ""
+            });
+        } else {
+            console.error("Invalid user object received:", user);
+        }
+    };
 
     const calculateItemTotal = (item) => {
         if (item.food_type === 'MD') {
@@ -319,8 +454,10 @@ export default function Cart({ buttonClassName }) {
     };
 
     const handleProceedToCheckout = () => {
-        // Validate guest name
+        // Validate guest name and phone
         const trimmedName = guestName.trim();
+        const trimmedPhone = userPhone.trim();
+        
         if (!trimmedName) {
             toast({
                 title: "Name Required",
@@ -331,8 +468,103 @@ export default function Cart({ buttonClassName }) {
             return;
         }
         
+        if (!trimmedPhone) {
+            toast({
+                title: "Phone Number Required",
+                description: "Please enter your phone number before proceeding to checkout",
+                variant: "destructive",
+                duration: 3000,
+            });
+            return;
+        }
+
+        // Optional: Encourage verification before checkout
+        if (verificationStatus !== 'success') {
+            toast({
+                title: "Phone Not Verified",
+                description: "We recommend verifying your mobile money number before checkout",
+                variant: "warning",
+                duration: 4000,
+            });
+            // Continue anyway - it's just a warning
+        }
+        
+        // Log customer data before proceeding
+        console.log("Customer data for checkout:", {
+            name: trimmedName,
+            phone: trimmedPhone,
+            email: userEmail,
+            verified: verificationStatus === 'success',
+            momoName: momoName
+        });
+        
         console.log("Current Container State:", container);
         setShowPayment(true);
+    };
+
+    // New function to verify the mobile money number
+    const verifyMomoNumber = async () => {
+        if (!userPhone || userPhone.length < 10) {
+            toast({
+                title: "Invalid Phone Number",
+                description: "Please enter a valid phone number",
+                variant: "destructive",
+                duration: 3000,
+            });
+            return;
+        }
+
+        setIsVerifying(true);
+        setVerificationStatus(null);
+        
+        try {
+            const response = await axios.post('https://payment.calabash.online/payment/momo/name/', {
+                phone: userPhone
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                }
+            });
+
+            console.log("MoMo verification response:", response.data);
+            
+            if (response.data.success) {
+                setVerificationStatus('success');
+                setMomoName(response.data.name || '');
+                
+                // Always use the MoMo name when verification is successful
+                if (response.data.name) {
+                    setGuestName(response.data.name);
+                }
+                
+                toast({
+                    title: "Verification Successful",
+                    description: `Mobile money account verified: ${response.data.name}`,
+                    duration: 3000,
+                });
+            } else {
+                setVerificationStatus('error');
+                toast({
+                    title: "Verification Failed",
+                    description: response.data.message || "Could not verify mobile money account",
+                    variant: "destructive",
+                    duration: 3000,
+                });
+            }
+        } catch (error) {
+            console.error('Error verifying MoMo number:', error);
+            setVerificationStatus('error');
+            toast({
+                title: "Verification Error",
+                description: "Failed to connect to verification service",
+                variant: "destructive",
+                duration: 3000,
+            });
+        } finally {
+            setIsVerifying(false);
+        }
     };
 
     return (
@@ -364,26 +596,141 @@ export default function Cart({ buttonClassName }) {
                         
                         <div className="mt-auto pt-2 space-y-2 sticky bottom-0 bg-gray-950/95 backdrop-blur-xl">
                             <div className="border-t border-gray-800 pt-2">
-                                {/* Guest Name Input */}
-                                <div className="mb-2">
-                                    <div className="relative">
-                                        <input
-                                            id="guestName"
-                                            type="text"
-                                            required
-                                            placeholder="Enter your name (required)"
-                                            className="w-full px-3 py-1.5 text-sm bg-gray-800/50 border border-gray-700/50 
-                                                     rounded-lg text-gray-300 placeholder-gray-500
-                                                     focus:outline-none focus:ring-2 focus:ring-yellow-500/20 
-                                                     focus:border-yellow-500/30 transition-all duration-200"
-                                            value={guestName}
-                                            onChange={(e) => setGuestName(e.target.value)}
-                                        />
-                                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                                            <span className="text-xs text-gray-500">
-                                                {guestName ? `${guestName}` : `Guest #${userInfo.userId.slice(0, 4)}`}
-                                            </span>
+                                {/* Customer Selection */}
+                                <div className="space-y-3 mb-4">
+                                    <div className="relative" ref={searchContainerRef}>
+                                        <Command className="rounded-lg border border-gray-800 overflow-visible">
+                                            <div className="flex items-center border-b border-gray-800 px-3">
+                                                <User className="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-400" />
+                                                <CommandInput
+                                                    placeholder="Search customer name..." 
+                                                    className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50 text-gray-300"
+                                                    value={guestName}
+                                                    onValueChange={(value) => {
+                                                        setGuestName(value);
+                                                        if (value.length >= 3) {
+                                                            searchUsers(value);
+                                                        } else {
+                                                            setCommandOpen(false);
+                                                        }
+                                                    }}
+                                                />
+                                            </div>
+                                        </Command>
+                                        
+                                        {/* Phone Number Input */}
+                                        <div className="flex items-center border border-gray-800 rounded-lg px-3 mt-2">
+                                            <Phone className="mr-2 h-4 w-4 shrink-0 opacity-50 text-gray-400" />
+                                            <input
+                                                id="phoneNumber"
+                                                type="tel"
+                                                required
+                                                placeholder="Phone number (required)"
+                                                className="flex h-9 w-full rounded-md bg-transparent py-3 text-sm outline-none placeholder:text-gray-500 disabled:cursor-not-allowed disabled:opacity-50 text-gray-300"
+                                                value={userPhone}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setUserPhone(value);
+                                                    // Reset verification status when phone changes
+                                                    if (verificationStatus) {
+                                                        setVerificationStatus(null);
+                                                        setMomoName('');
+                                                    }
+                                                    if (value.length >= 3) {
+                                                        setCommandOpen(true);
+                                                        searchUsers(value);
+                                                    } else {
+                                                        setCommandOpen(false);
+                                                    }
+                                                }}
+                                                onFocus={() => {
+                                                    if (userPhone && userPhone.length >= 3) {
+                                                        setCommandOpen(true);
+                                                        searchUsers(userPhone);
+                                                    }
+                                                }}
+                                            />
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={verifyMomoNumber}
+                                                disabled={isVerifying || !userPhone}
+                                                className={`ml-2 flex items-center gap-1 px-2 py-1 h-8 transition-colors ${
+                                                    verificationStatus === 'success' 
+                                                        ? 'text-green-500 hover:text-green-600' 
+                                                        : verificationStatus === 'error'
+                                                        ? 'text-red-500 hover:text-red-600'
+                                                        : 'text-gray-400 hover:text-white'
+                                                }`}
+                                            >
+                                                {isVerifying ? (
+                                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                                ) : verificationStatus === 'success' ? (
+                                                    <Check className="h-3.5 w-3.5" />
+                                                ) : verificationStatus === 'error' ? (
+                                                    <AlertCircle className="h-3.5 w-3.5" />
+                                                ) : (
+                                                    "Verify"
+                                                )}
+                                            </Button>
                                         </div>
+                                        
+                                        {/* Show MoMo name if verified */}
+                                        {verificationStatus === 'success' && momoName && (
+                                            <div className="mt-1 text-xs text-green-500 ml-2 flex items-center">
+                                                <Check className="h-3 w-3 mr-1" />
+                                                <span>Verified: {momoName}</span>
+                                            </div>
+                                        )}
+                                        
+                                        {verificationStatus === 'error' && (
+                                            <div className="mt-1 text-xs text-red-500 ml-2 flex items-center">
+                                                <AlertCircle className="h-3 w-3 mr-1" />
+                                                <span>Verification failed</span>
+                                            </div>
+                                        )}
+
+                                        {commandOpen && (
+                                            <div className="absolute top-full left-0 right-0 z-10 mt-1">
+                                                <div className="rounded-md border border-gray-800 bg-gray-900 shadow-lg">
+                                                    {isSearching ? (
+                                                        <div className="py-3 px-4 text-sm text-gray-400 flex items-center">
+                                                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                                            Searching...
+                                                        </div>
+                                                    ) : userSearchResults.length === 0 ? (
+                                                        <div className="py-3 px-4 text-sm text-gray-400 text-center">
+                                                            No customer found. Please enter details manually.
+                                                        </div>
+                                                    ) : (
+                                                        <div className="max-h-[200px] overflow-auto">
+                                                            {userSearchResults.map((user) => (
+                                                                <div
+                                                                    key={user.id || user._id}
+                                                                    className="flex items-center px-4 py-2 text-gray-200 hover:bg-gray-800 cursor-pointer"
+                                                                    onClick={() => handleCustomerClick(user)}
+                                                                >
+                                                                    <Check
+                                                                        className={cn(
+                                                                            "mr-2 h-4 w-4",
+                                                                            guestName === user.name ? "opacity-100 text-yellow-500" : "opacity-0"
+                                                                        )}
+                                                                    />
+                                                                    <div className="flex flex-col">
+                                                                        <div className="font-medium">{user.name}</div>
+                                                                        <div className="flex text-xs text-gray-400 gap-3">
+                                                                            {user.phone && <span>{user.phone}</span>}
+                                                                            {user.email && <span className="truncate max-w-[150px]">{user.email}</span>}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
 
@@ -414,6 +761,11 @@ export default function Cart({ buttonClassName }) {
                     onClose={() => setShowPayment(false)}
                     totalAmount={calculateGrandTotal()}
                     guestName={guestName.trim()}
+                    setGuestName={setGuestName}
+                    userPhone={userPhone}
+                    userEmail={userEmail}
+                    verified={verificationStatus === 'success'}
+                    momoName={momoName}
                 />
             </SheetContent>
         </Sheet>
