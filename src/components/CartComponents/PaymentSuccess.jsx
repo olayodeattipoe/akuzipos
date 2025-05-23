@@ -85,13 +85,13 @@ export default function PaymentSuccess() {
             const data = await response.json();
             console.log("Payment status response:", data);
             console.log("Checking conditions:", {
-                responseCode: data.responseCode,
-                status: data.data.status,
-                isSuccess: data.responseCode === '0000' && data.data.status === 'Paid'
+                responseCode: data.data?.details?.responseCode,
+                status: data.data?.status,
+                isSuccess: data.success && data.data?.status === 'success'
             });
             
             // Check if payment is successful based on actual response structure
-            if (data.responseCode === '0000' && data.data.status === 'Paid') {
+            if (data.success && data.data?.status === 'success') {
                 console.log("Payment verification successful, updating status");
                 setStatus('success');
                 toast({
@@ -123,7 +123,7 @@ export default function PaymentSuccess() {
                 // If payment is still processing, retry after a delay
                 setRetryCount(prev => prev + 1);
                 isVerifyingRef.current = false;
-                timerRef.current = setTimeout(() => verifyPayment(), 5000); // Increased from 3000 to 5000ms
+                timerRef.current = setTimeout(() => verifyPayment(), 5000); // 5 second delay between retries
             }
         } catch (error) {
             console.error('Verification attempt failed:', error);
