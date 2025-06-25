@@ -105,7 +105,7 @@ export default function Payment({ isOpen, onClose, totalAmount, guestName, setGu
                 adminUser: adminUsername
             }, null, 2));
             
-            const response = await fetch('https://orders.calabash.online/orderManager/process_order/', {
+            const response = await fetch('https://akuzi-orders.calabash.online/orderManager/process_order/', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
