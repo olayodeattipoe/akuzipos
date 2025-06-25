@@ -79,7 +79,7 @@ export default function Cart({ buttonClassName }) {
         try {
             console.log("Searching for users with term:", searchTerm);
             
-            const response = await axios.post('https://management.calabash.online/mcc_primaryLogic/editables/', {
+            const response = await axios.post('https://akuzi.calabash.online/mcc_primaryLogic/editables/', {
                 action: "search_users",
                 content: {
                     query: searchTerm
