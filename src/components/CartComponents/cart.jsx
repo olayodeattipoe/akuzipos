@@ -27,6 +27,12 @@ const EmptyCart = () => {
     );
 };
 
+const generateUsernameAndPhonenumber = () =>{
+    const timestamp = Date.now().toString().slice(-2); // last 2 digits of ms timestamp
+    const randomPart = Math.floor(Math.random() * 90 + 10); // 2-digit random
+  return `${timestamp}${randomPart}`; // 8-digit pseudo-unique
+}
+
 export default function Cart({ buttonClassName }) {
     const dispatch = useDispatch();
     const { toast } = useToast();
@@ -49,8 +55,9 @@ export default function Cart({ buttonClassName }) {
     const [momoName, setMomoName] = useState('');
 
     useEffect(()=>{
-        console.log("hesus",container)
-        console.log("order",order)
+        const generated = generateUsernameAndPhonenumber()
+        setGuestName(generated)
+        setUserPhone(generated)
     },[container])
 
     useEffect(() => {
@@ -714,7 +721,7 @@ export default function Cart({ buttonClassName }) {
                                                                     <Check
                                                                         className={cn(
                                                                             "mr-2 h-4 w-4",
-                                                                            guestName === user.name ? "opacity-100 text-yellow-500" : "opacity-0"
+                                                                            //guestName === user.name ? "opacity-100 text-yellow-500" : "opacity-0"
                                                                         )}
                                                                     />
                                                                     <div className="flex flex-col">
